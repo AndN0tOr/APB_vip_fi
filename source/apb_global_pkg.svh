@@ -1,0 +1,59 @@
+`ifndef FPT_APB_GLOBAL_PKG
+`define FPT_APB_GLOBAL_PKG
+
+package apb_global_pkg;
+    //Parameter : DATA_WIDTH
+    //Used to set the data width 
+    //Maximum Value is 8
+    parameter int DATA_WIDTH = 32;
+
+    //Parameter : ADDRESS_WIDTH
+    //Used to set the address width to the address bus
+    //Maximum Value is 32
+    parameter int ADDRESS_WIDTH = 32;
+
+    //-------------------------------------------------------
+    // Enum : slave_error_e
+    //  Used to declare enum type for the pslverr
+    //-------------------------------------------------------
+    typedef enum bit{
+        NO_ERROR = 1'b0,
+        ERROR    = 1'b1
+    } slave_error_e;
+
+    //-------------------------------------------------------
+    // Enum : tx_type_e 
+    //  Used to declare the type of transaction done
+    //-------------------------------------------------------
+    typedef enum bit{
+        WRITE = 1'b1,
+        READ  = 1'b0 
+    } tx_type_e; 
+
+
+    //-------------------------------------------------------
+    // Enum : apb_fsm_state_e
+    //  Used to declare the type of fsm state
+    //-------------------------------------------------------
+    typedef enum bit[2:0] {
+        //NO_STATE, 
+        IDLE,
+        SETUP,
+        ACCESS,
+        WAIT
+    }apb_fsm_state_e; 
+
+    //-------------------------------------------------------
+    // Enum : transfer_size_e
+    //  Used to declare enum type for all transfer sizes
+    //-------------------------------------------------------
+    // typedef enum bit[31:0]{
+    //     BIT_8  = 32'd8,
+    //     BIT_16 = 32'd16,
+    //     BIT_24 = 32'd24,
+    //     BIT_32 = 32'd32
+    // } transfer_size_e;
+
+endpackage: apb_global_pkg
+
+`endif
