@@ -1,17 +1,15 @@
 `ifndef FPT_APB_GLOBAL_PKG
 `define FPT_APB_GLOBAL_PKG
 
-package apb_global_pkg;
-    //Parameter : DATA_WIDTH
-    //Used to set the data width 
-    //Maximum Value is 8
-    parameter int DATA_WIDTH = 32;
+`ifndef FPT_APB_ADDR_WIDTH
+`define FPT_APB_ADDR_WIDTH 32
+`endif
 
-    //Parameter : ADDRESS_WIDTH
-    //Used to set the address width to the address bus
-    //Maximum Value is 32
-    parameter int ADDRESS_WIDTH = 32;
+`ifndef FPT_APB_DATA_WIDTH
+`define FPT_APB_DATA_WIDTH 32
+`endif
 
+package fpt_apb_global_pkg;
     //-------------------------------------------------------
     // Enum : slave_error_e
     //  Used to declare enum type for the pslverr
@@ -54,6 +52,6 @@ package apb_global_pkg;
     //     BIT_32 = 32'd32
     // } transfer_size_e;
 
-endpackage: apb_global_pkg
+endpackage: fpt_apb_global_pkg
 
 `endif
