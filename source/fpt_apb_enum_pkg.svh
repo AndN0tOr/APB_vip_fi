@@ -1,7 +1,7 @@
-`ifndef FPT_APB_ENUM
-`define FPT_APB_ENUM
+`ifndef FPT_APB_ENUM_SVH
+`define FPT_APB_ENUM_SVH
 
-package fpt_apb_enum;
+package fpt_apb_enum_pkg;
     //-------------------------------------------------------
     // Enum : slave_error_e
     //  Used to declare enum type for the pslverr
@@ -44,6 +44,6 @@ package fpt_apb_enum;
     //     BIT_32 = 32'd32
     // } transfer_size_e;
 
-endpackage: fpt_apb_enum
+endpackage: fpt_apb_enum_pkg
 
 `endif
