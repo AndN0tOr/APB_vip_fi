@@ -2,7 +2,7 @@
 `define FPT_APB_MASTER_PKG_SVH
 
 `include "uvm_macros.svh"
-`include "../fpt_apb_global_pkg.svh"
+`include "../fpt_apb_global_pkg.sv"
 
 package fpt_apb_master_pkg;
     import uvm_pkg::*;
