@@ -23,22 +23,26 @@ interface fpt_apb_if #(
     logic [DATA_WIDTH-1:0] PRDATA;
     logic PSLVERR;
 
-    clocking master_cb@ (posedge PCLK);
+    clocking master_drv_cb@ (posedge PCLK);
+        default input #1step output #1ns;
         output PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB;
         input PREADY, PRDATA, PSLVERR;
     endclocking: master_cb
 
-    clocking slave_cb@ (posedge PCLK);
+    clocking slave_drv_cb@ (posedge PCLK);
+        default input #1step output #1ns;
         input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB;
         output PREADY, PRDATA, PSLVERR;
     endclocking: slave_cb
   
     clocking master_mon_cb@ (posedge PCLK);
-        input PREADY, PRDATA, PSLVERR;
+        default input #1step output #1ns;
+        input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB, PREADY, PRDATA, PSLVERR;
     endclocking
 
     clocking slave_mon_cb@ (posedge PCLK);
-        input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB;
+        default input #1step output #1ns;
+        input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB, PREADY, PRDATA, PSLVERR;
     endclocking
 
 
