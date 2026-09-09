@@ -49,48 +49,35 @@ interface fpt_apb_if #(
     PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL));
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE));
 
-
+    //-----------------------------------------
     // Check if unknown values appear
+    //-----------------------------------------
+
     property p_no_x(condition, sig);
         @(posedge PCLK) disable iff (!PRESETn)
         condition |-> !$isunknown(sig);
     endproperty
 
-    CHK_X_PSEL: 
-        assert property (p_no_x(1'b1, PSEL))
+    CHK_X_PSEL: assert property (p_no_x(1'b1, PSEL))
         else $error("PSEL is unknown while reset is inactive");
-
-    CHK_X_PENABLE: 
-        assert property (p_no_x(1'b1, PENABLE))
+    CHK_X_PENABLE: assert property (p_no_x(1'b1, PENABLE))
         else $error("PENABLE is unknown while reset is inactive");
-
-    CHK_X_PWRITE: 
-        assert property (p_no_x(PSEL, PWRITE))
+    CHK_X_PWRITE: assert property (p_no_x(PSEL, PWRITE))
         else $error("PWRITE is unknown during a valid transfer");
-
-    CHK_X_PADDR: 
-        assert property (p_no_x(PSEL, PADDR))
+    CHK_X_PADDR: assert property (p_no_x(PSEL, PADDR))
         else $error("PADDR is unknown during a valid transfer");
-
-    CHK_X_PWDATA: 
-        assert property (p_no_x(PSEL && PWRITE, PWDATA))
+    CHK_X_PWDATA: assert property (p_no_x(PSEL && PWRITE, PWDATA))
         else $error("PWDATA is unknown during a Write transfer");
-
-    CHK_X_PSTRB: 
-        assert property (p_no_x(PSEL && PWRITE, PSTRB))
+    CHK_X_PSTRB: assert property (p_no_x(PSEL && PWRITE, PSTRB))
         else $error("PSTRB is unknown during a Write transfer");
-
-    CHK_X_PREADY: 
-        assert property (p_no_x(PSEL && PENABLE, PREADY))
+    CHK_X_PREADY: assert property (p_no_x(PSEL && PENABLE, PREADY))
         else $error("PREADY is unknown during the ACCESS phase");
-
-    CHK_X_PRDATA: 
-        assert property (p_no_x(PSEL && PENABLE && !PWRITE && PREADY && !PSLVERR, PRDATA))
+    CHK_X_PRDATA: assert property (p_no_x(PSEL && PENABLE && !PWRITE && PREADY && !PSLVERR, PRDATA))
         else $error("PRDATA is unknown during a valid Read transfer completion");
-
-    CHK_X_PSLVERR: 
-        assert property (p_no_x(PSEL && PENABLE, PSLVERR))
+    CHK_X_PSLVERR: assert property (p_no_x(PSEL && PENABLE, PSLVERR))
         else $error("PSLVERR is unknown during the ACCESS phase");
+
+    
 
 endinterface
 
