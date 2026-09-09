@@ -16,16 +16,16 @@ class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
 endclass
 
 // Function: new
-function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
+function fpt_apb_slave_driver::new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
     super.new(name, parent);
 endfunction
 
 // Function: build_phase
 function void fpt_apb_slave_driver::build_phase(uvm_phase phase);
 	super.build_phase(phase);
-	if (!uvm_config_db#(virtual fpt_apb_vif)::get(this, "", "fpt_apb_vif", vif)) begin
-		`uvm_fatal(get_full_name(), "No virtual interface specified for fpt_apb_slave_driver")
-	end 
+    if (!uvm_config_db#(virtual fpt_apb_if)::get(this, "", "fpt_apb_vif", vif)) begin
+        `uvm_fatal("NO_VIF", "No virtual interface specified for fpt_apb_slave_driver")
+    end
 endfunction: build_phase	
 
 // Task: run_phase
@@ -38,7 +38,9 @@ endtask
 // Task: init_signals
 // Description: This class is used give initial value to apb slave signals.	
 task fpt_apb_slave_driver::init_signals();
-	vif.slave_drv_cb.PREADY  <= 0;	
+	vif.slave_drv_cb.PREADY  <= 1'b0;	
+    vif.slave_drv_cb.PRDATA  <= '0;	
+    vif.slave_drv_cb.PSLVERR <= 1'b0;	
 endtask		
 
 // Task: get_and_drive
@@ -46,7 +48,7 @@ endtask
 task fpt_apb_slave_driver::get_and_drive();
     init_signals();
 
-	forever begin
+	forever begin 
 		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
 		seq_item_port.get_next_item(m_apb_slave_seq_item);
 		
@@ -66,7 +68,8 @@ task fpt_apb_slave_driver::get_and_drive();
         // Make sure PRESETn is not asserted after delay
         if (!vif.PRESETn) begin
             init_signals();
-            return;
+            seq_item_port.item_done();
+            continue;
         end
 		
         // Drive PREADY and PSLVERR
@@ -78,12 +81,11 @@ task fpt_apb_slave_driver::get_and_drive();
 		else
         vif.slave_drv_cb.PRDATA <= '0;
 
-        @ (slave_drv_cb);
-
-		vif.slave.PREADY <= 1'b0;	
-        vif.slave.PSLVERR <= 1'b0;		
+        @ (vif.slave_drv_cb);
+		vif.slave_drv_cb.PREADY <= 1'b0;	
+        vif.slave_drv_cb.PSLVERR <= 1'b0;		
 		
-		//seq_item_port.item_done();
+		seq_item_port.item_done();
 		`uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW);
 	end				
 endtask

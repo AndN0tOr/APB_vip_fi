@@ -8,11 +8,11 @@ package fpt_apb_slave_pkg;
     import uvm_pkg::*;
     import fpt_apb_global_pkg::*;
     import fpt_apb_enum_pkg::*;
-    `include "fpt_apb_slave_seq_item.sv"
-    `include "fpt_apb_slave_sequence.sv"
-    `include "fpt_apb_slave_sequencer.sv"
-    `include "fpt_apb_slave_driver.sv"
-    `include "fpt_apb_slave_agent.sv"
+    `include "fpt_apb_slave_seq_item.svh"
+    `include "fpt_apb_slave_sequence.svh"
+    `include "fpt_apb_slave_sequencer.svh"
+    `include "fpt_apb_slave_driver.svh"
+    `include "fpt_apb_slave_agent.svh"
 endpackage
 
 

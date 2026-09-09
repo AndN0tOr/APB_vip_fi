@@ -7,7 +7,6 @@ class fpt_apb_slave_agent extends uvm_agent;
     // Need config
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
     fpt_apb_slave_driver m_apb_slave_driver;
-    fpt_apb_slave_sequence m_apb_slave_sequence;
     fpt_apb_slave_sequencer m_apb_slave_sequencer;
     //Need monitor
 
@@ -18,7 +17,7 @@ class fpt_apb_slave_agent extends uvm_agent;
 endclass
 
 // Function: new
-function new(string name = "fpt_apb_slave_agent", uvm_component parent = null);
+function fpt_apb_slave_agent::new(string name = "fpt_apb_slave_agent", uvm_component parent = null);
     super.new(name, parent);
 endfunction
 
@@ -29,11 +28,11 @@ function void fpt_apb_slave_agent::build_phase(uvm_phase phase);
     // Need config on later versions
 
     m_apb_slave_seq_item    = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
-    m_apb_slave_seq	        = fpt_apb_slave_seq::type_id::create("m_apb_slave_seq");
-
+    m_apb_slave_driver      = fpt_apb_slave_driver::type_id::create("m_apb_slave_driver", this);
+    m_apb_slave_sequencer   = fpt_apb_slave_sequencer::type_id::create("m_apb_slave_sequencer", this);
 endfunction: build_phase	
 
-function void apb_slave_agent::connect_phase(uvm_phase phase);
+function void fpt_apb_slave_agent::connect_phase(uvm_phase phase);
 	super.connect_phase(phase);
 	
 	// if(m_cfg.is_active == UVM_ACTIVE) begin
@@ -41,5 +40,4 @@ function void apb_slave_agent::connect_phase(uvm_phase phase);
 	// end	
 	
 endfunction	
-endtask
 `endif

@@ -8,7 +8,7 @@
 // import apb_slave_pkg::*;
 
 class fpt_apb_env extends uvm_env;
-	`uvm_component_utils(apb_env)
+	`uvm_component_utils(fpt_apb_env)
 
 	//--------------------------------------------------------------------
 	//	Component Members
@@ -37,7 +37,7 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
 	super.build_phase(phase);
 	
 	//master_agent = apb_master_agent::type_id::create("master_agent", this);
-	slave_agent  = apb_slave_agent::type_id::create("slave_agent", this);
+	slave_agent  = fpt_apb_slave_agent::type_id::create("slave_agent", this);
 		
 	if (!uvm_config_db#(virtual fpt_apb_if)::get(null, "", "apb_vif", vif)) begin
 		`uvm_fatal(get_full_name(), "No virtual interface specified for env")

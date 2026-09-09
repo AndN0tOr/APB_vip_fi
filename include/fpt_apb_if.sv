@@ -27,13 +27,13 @@ interface fpt_apb_if #(
         default input #1step output #1ns;
         output PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB;
         input PREADY, PRDATA, PSLVERR;
-    endclocking: master_cb
+    endclocking
 
     clocking slave_drv_cb@ (posedge PCLK);
         default input #1step output #1ns;
         input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PSTRB;
         output PREADY, PRDATA, PSLVERR;
-    endclocking: slave_cb
+    endclocking
   
     clocking master_mon_cb@ (posedge PCLK);
         default input #1step output #1ns;
