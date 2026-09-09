@@ -5,7 +5,7 @@ class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
     `uvm_component_utils(fpt_apb_slave_driver)
 
     virtual fpt_apb_if vif;
-    fpt_apb_slave_seq_item apb_slave_seq_item;
+    fpt_apb_slave_seq_item m_apb_slave_seq_item;
 
     extern function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);
@@ -46,15 +46,9 @@ endtask
 task fpt_apb_slave_driver::get_and_drive();
     init_signals();
 
-	//forever begin
-        // Currently creating one transaction direction for v0.0
-		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
-        
-        if (!m_apb_slave_seq_item.randomize())
-            `uvm_fatal("SLAVE_RAND", "Failed to randomize slave transaction")
-		
-        //m_apb_slave_seq_item = apb_slave_seq_item::type_id::create("m_apb_slave_seq_item",this);
-		//seq_item_port.get_next_item(m_apb_slave_seq_item);
+	forever begin
+		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
+		seq_item_port.get_next_item(m_apb_slave_seq_item);
 		
         //  Skip all PRESETn cycles while waiting for Wait for PSEL and PENABLE
 		do begin
@@ -86,11 +80,10 @@ task fpt_apb_slave_driver::get_and_drive();
 
         @ (slave_drv_cb);
 
-        /////////////////////////////////////////////////////////////////// Not sure
 		vif.slave.PREADY <= 1'b0;	
         vif.slave.PSLVERR <= 1'b0;		
 		
 		//seq_item_port.item_done();
 		`uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW);
-	//end				
+	end				
 endtask
