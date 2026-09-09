@@ -29,7 +29,7 @@ class fpt_apb_base_test extends uvm_test;
     extern virtual function void end_of_elaboration_phase(uvm_phase phase);
     extern virtual task run_phase(uvm_phase phase);
 
-endclass : apb_base_test
+endclass : fpt_apb_base_test
 
 //--------------------------------------------------------------------------------------------
 // Construct: new
