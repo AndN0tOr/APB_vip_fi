@@ -32,5 +32,65 @@ endfunction: build_phase
 task fpt_apb_slave_driver::run_phase(uvm_phase phase);
 	super.run_phase(phase);
 
+    get_and_drive();
 endtask
 
+// Task: init_signals
+// Description: This class is used give initial value to apb slave signals.	
+task fpt_apb_slave_driver::init_signals();
+	vif.slave_drv_cb.PREADY  <= 0;	
+endtask		
+
+// Task: get_and_drive
+// Definition:	this task call drive signals.
+task fpt_apb_slave_driver::get_and_drive();
+    init_signals();
+
+	//forever begin
+        // Currently creating one transaction direction for v0.0
+		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
+        
+        if (!m_apb_slave_seq_item.randomize())
+            `uvm_fatal("SLAVE_RAND", "Failed to randomize slave transaction")
+		
+        //m_apb_slave_seq_item = apb_slave_seq_item::type_id::create("m_apb_slave_seq_item",this);
+		//seq_item_port.get_next_item(m_apb_slave_seq_item);
+		
+        //  Skip all PRESETn cycles while waiting for Wait for PSEL and PENABLE
+		do begin
+            @(vif.slave_drv_cb);
+            if (!vif.PRESETn) begin
+                init_signals();
+                return;
+            end
+        end while (!(vif.slave_drv_cb.PSEL &&
+                    vif.slave_drv_cb.PENABLE));
+		
+        // Simulation time unit delay
+		#(m_apb_slave_seq_item.delay);
+
+        // Make sure PRESETn is not asserted after delay
+        if (!vif.PRESETn) begin
+            init_signals();
+            return;
+        end
+		
+        // Drive PREADY and PSLVERR
+        vif.slave_drv_cb.PREADY <= 1'b1;
+        vif.slave_drv_cb.PSLVERR <= m_apb_slave_seq_item.PSLVERR;
+		
+		if(!vif.slave_drv_cb.PWRITE)
+			vif.slave_drv_cb.PRDATA <= m_apb_slave_seq_item.PRDATA;
+		else
+        vif.slave_drv_cb.PRDATA <= '0;
+
+        @ (slave_drv_cb);
+
+        /////////////////////////////////////////////////////////////////// Not sure
+		vif.slave.PREADY <= 1'b0;	
+        vif.slave.PSLVERR <= 1'b0;		
+		
+		//seq_item_port.item_done();
+		`uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW);
+	//end				
+endtask
