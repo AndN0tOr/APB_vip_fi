@@ -1,5 +1,5 @@
-`ifndef FPT_APB_SLAVE_TX
-`define FPT_APB_SLAVE_TX
+`ifndef FPT_APB_SLAVE_SEQ_ITEM_SVH
+`define FPT_APB_SLAVE_SEQ_ITEM_SVH
 
 class fpt_apb_slave_seq_item extends uvm_sequence_item;
     `uvm_object_utils(fpt_apb_slave_seq_item)
@@ -125,4 +125,4 @@ function void fpt_apb_slave_seq_item::do_print(uvm_printer printer);
     printer.print_field("delay", delay, $bits(delay), UVM_DEC);
 endfunction : do_print
 
-`endif
+`endif //FPT_APB_SLAVE_SEQ_ITEM_SVH
