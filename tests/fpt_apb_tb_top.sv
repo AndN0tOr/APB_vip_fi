@@ -1,12 +1,12 @@
 `timescale 1ns/1ps
 
 `include "uvm_macros.svh"
-`include "include/fpt_apb_if.sv"
-`include "source/fpt_apb_typedef_pkg.sv"
+`include "../include/fpt_apb_if.sv"
+`include "../source/fpt_apb_typedef_pkg.sv"
 
-`include "source/fpt_apb_global_pkg.sv"
-`include "source/slave/fpt_apb_slave_pkg.sv"
-`include "source/master/fpt_apb_master_pkg.sv"
+`include "../source/fpt_apb_global_pkg.sv"
+`include "../source/slave/fpt_apb_slave_pkg.sv"
+`include "../source/master/fpt_apb_master_pkg.sv"
 
 import uvm_pkg::*;
 import fpt_apb_typedef_pkg::*;
@@ -15,8 +15,8 @@ import fpt_apb_enum_pkg::*;
 import fpt_apb_slave_pkg::*;
 import fpt_apb_master_pkg::*;
 
-`include "source/fpt_apb_env.svh"
-`include "tests/fpt_apb_base_test.svh"
+`include "../source/fpt_apb_env.svh"
+`include "fpt_apb_base_test.svh"
 
 module fpt_apb_tb_top;
     logic PCLK;
@@ -41,7 +41,12 @@ module fpt_apb_tb_top;
         repeat (2) @(posedge PCLK);
         PRESETn <= 1'b1;
     end
-
+    initial begin
+        $fsdbDumpfile("novas.fsdb");
+        $fsdbDumpvars(0, fpt_apb_tb_top);
+        $fsdbDumpMDA();
+        $display("[TB_TOP] FSDB dumping enabled!"); // Thêm log để xác nhận block này đã chạy
+    end
     initial begin
         uvm_config_db#(fpt_apb_vif_t)::set(
             null, "*", "fpt_apb_vif", apb_if
