@@ -30,3 +30,24 @@ python .\sim\questa.py --gui
 
 The script compiles `tests/fpt_apb_tb_top.sv`. Generated files and the command-line simulation log are placed in `sim/build/questa`.
 
+## VCS simulation
+
+Requirements: Python 3, Synopsys VCS installation on Linux.
+
+From the repository root, ensure VCS_HOME is set to your VCS installation path. For example:
+
+```Bash
+export VCS_HOME="/opt/synopsys/vcs/X-2025.06"
+```
+
+Compile and run the testbench in command-line mode:
+```Bash
+python3 sim/vcs.py
+```
+
+To open the VCS GUI:
+```Bash
+python3 sim/vcs.py --gui
+```
+
+The script reads the filelist at `flist.f`. Generated build artifacts `simv` and simulation logs are placed in `sim/build/vcs`.
