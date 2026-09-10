@@ -1,5 +1,5 @@
-`ifndef FPT_APB_ENUM_SVH
-`define FPT_APB_ENUM_SVH
+`ifndef FPT_APB_ENUM_PKG
+`define FPT_APB_ENUM_PKG
 
 package fpt_apb_enum_pkg;
     //-------------------------------------------------------
