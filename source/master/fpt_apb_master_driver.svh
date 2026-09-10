@@ -38,38 +38,49 @@ task fpt_apb_master_driver::init_signals();
 endtask		
 
 task fpt_apb_master_driver::get_and_drive();
+    // Khởi tạo tín hiệu một lần duy nhất trước khi vào vòng lặp
     init_signals();
     
-    
-    seq_item_port.get_next_item(req);
-    
-    // Align to clock edge before starting the transfer
-    @(posedge vif.PCLK);
+    // Thêm vòng lặp forever để liên tục nhận transaction
+    forever begin
+        // 1. Nhận item từ sequencer
+        seq_item_port.get_next_item(req);
+        
+        // Căn chỉnh theo sườn clock trước khi bắt đầu transfer
+        @(posedge vif.PCLK);
 
-    // ---------------------------------------------------------
-    // SETUP PHASE
-    // ---------------------------------------------------------
-    vif.PSEL    <= 1'b1;
-    vif.PENABLE <= 1'b0;
-    vif.PWRITE  <= 1'b0; // 0 indicates a Read transfer
-    vif.PADDR   <= req.PADDR; // Assuming your seq_item has a 'paddr' property
+        // ---------------------------------------------------------
+        // SETUP PHASE
+        // ---------------------------------------------------------
+        vif.PSEL    <= 1'b1;
+        vif.PENABLE <= 1'b0;
+        
+        // Mẹo: Thay vì fix cứng 1'b0 (chỉ Read), bạn có thể dùng req.PWRITE 
+        // để driver này hỗ trợ cả lệnh Read và lệnh Write nhé.
+        vif.PWRITE  <= 1'b0; 
+        
+        vif.PADDR   <= req.PADDR; 
 
-    // ---------------------------------------------------------
-    // ACCESS PHASE
-    // ---------------------------------------------------------
-    @(posedge vif.PCLK);
-    vif.PENABLE <= 1'b1;
+        // ---------------------------------------------------------
+        // ACCESS PHASE
+        // ---------------------------------------------------------
+        @(posedge vif.PCLK);
+        vif.PENABLE <= 1'b1;
 
-    // ---------------------------------------------------------
-    // COMPLETION & DATA CAPTURE
-    // ---------------------------------------------------------
-    @(posedge vif.PCLK);
-    // Since there are no wait states (PREADY is assumed 1), capture data immediately
-    req.PRDATA = vif.PRDATA; 
-    
-    // Clear signals back to idle state
-    vif.PSEL    <= 1'b0;
-    vif.PENABLE <= 1'b0;
+        // ---------------------------------------------------------
+        // COMPLETION & DATA CAPTURE
+        // ---------------------------------------------------------
+        @(posedge vif.PCLK);
+        // Do không có wait states (mặc định PREADY = 1), lấy data ngay
+        req.PRDATA = vif.PRDATA; 
+        
+        // Đưa tín hiệu về trạng thái idle
+        vif.PSEL    <= 1'b0;
+        vif.PENABLE <= 1'b0;
+        
+        // 2. BẮT BUỘC CÓ: Báo cho sequencer biết transaction đã hoàn tất
+        seq_item_port.item_done();
+    end
 endtask
 
 `endif // FPT_APB_MASTER_DRIVER_SVH
