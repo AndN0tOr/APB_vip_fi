@@ -3,7 +3,7 @@
 
 class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     `uvm_component_utils(fpt_apb_master_driver)
-    virtual fpt_apb_if vif;
+    fpt_apb_vif_t vif;
 
     extern function new (string name = "fpt_apb_master_driver", uvm_component parent = null);
     extern virtual function void build_phase(uvm_phase phase);
@@ -21,7 +21,7 @@ endfunction
 
 function void fpt_apb_master_driver::build_phase(uvm_phase phase);
 	super.build_phase(phase);
-	if (!uvm_config_db#(virtual fpt_apb_vif)::get(this, "", "fpt_apb_vif", vif)) begin
+	if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
 		`uvm_fatal(get_full_name(), "No virtual interface specified for fpt_apb_master_driver")
 	end 
 endfunction: build_phase	

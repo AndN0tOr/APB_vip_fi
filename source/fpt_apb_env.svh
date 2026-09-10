@@ -36,8 +36,8 @@ endfunction
 function void fpt_apb_env::build_phase(uvm_phase phase);
 	super.build_phase(phase);
 	
-	master_agent = fpt_apb_master_agent::type_id::create("master_agent", this);
-	slave_agent  = fpt_apb_slave_agent::type_id::create("slave_agent", this);
+	master_agent = fpt_apb_master_agent::type_id::create("fpt_apb_master_agent", this);
+	slave_agent  = fpt_apb_slave_agent::type_id::create("fpt_apb_slave_agent", this);
 		
 	if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
 		`uvm_fatal(get_full_name(), "No virtual interface specified for env")

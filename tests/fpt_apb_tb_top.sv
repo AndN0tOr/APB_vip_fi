@@ -6,12 +6,14 @@
 
 `include "source/fpt_apb_global_pkg.sv"
 `include "source/slave/fpt_apb_slave_pkg.sv"
+`include "source/master/fpt_apb_master_pkg.sv"
 
 import uvm_pkg::*;
 import fpt_apb_typedef_pkg::*;
 import fpt_apb_global_pkg::*;
 import fpt_apb_enum_pkg::*;
 import fpt_apb_slave_pkg::*;
+import fpt_apb_master_pkg::*;
 
 `include "source/fpt_apb_env.svh"
 `include "tests/fpt_apb_base_test.svh"
