@@ -44,10 +44,13 @@ Compile and run the testbench in command-line mode:
 ```Bash
 python3 sim/vcs.py
 ```
-
-To open the VCS GUI:
+Change the directory to fsdb file
 ```Bash
-python3 sim/vcs.py --gui
+cd sim/build/vcs
+```
+Open the Verdi
+```Bash
+verdi --ssf novas.fsdb
 ```
 
 The script reads the filelist at `flist.f`. Generated build artifacts `simv` and simulation logs are placed in `sim/build/vcs`.

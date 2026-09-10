@@ -6,6 +6,9 @@ sim/build/
 modelsim.ini
 
 # Synopsys Build Files
+novas.rc
+novas.conf
+verdiLog
 csrc
 simv
 simv.daidir
