@@ -2,6 +2,7 @@
 work
 run -all
 transcript
+sim/build/
 
 
 # Synopsys Build Files

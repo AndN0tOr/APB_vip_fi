@@ -4,13 +4,12 @@
 class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
     `uvm_component_utils(fpt_apb_slave_driver)
 
-    virtual fpt_apb_if vif;
+    fpt_apb_vif_t vif;
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
 
     extern function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);
 	extern virtual task run_phase(uvm_phase phase);
-	extern virtual task wait_for_reset();
 	extern virtual task get_and_drive();
 	extern virtual task init_signals();
 endclass
@@ -23,7 +22,7 @@ endfunction
 // Function: build_phase
 function void fpt_apb_slave_driver::build_phase(uvm_phase phase);
 	super.build_phase(phase);
-    if (!uvm_config_db#(virtual fpt_apb_if)::get(this, "", "fpt_apb_vif", vif)) begin
+    if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
         `uvm_fatal("NO_VIF", "No virtual interface specified for fpt_apb_slave_driver")
     end
 endfunction: build_phase	
@@ -89,3 +88,5 @@ task fpt_apb_slave_driver::get_and_drive();
 		`uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW);
 	end				
 endtask
+
+`endif // FPT_APB_SLAVE_DRIVER_SVH

@@ -16,7 +16,7 @@ class fpt_apb_env extends uvm_env;
 	//fpt_apb_master_agent  master_agent;
 	fpt_apb_slave_agent  slave_agent;
 
-	virtual fpt_apb_if  vif;
+	fpt_apb_vif_t vif;
 
 	//--------------------------------------------------------------------
 	//	Methods
@@ -39,7 +39,7 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
 	//master_agent = apb_master_agent::type_id::create("master_agent", this);
 	slave_agent  = fpt_apb_slave_agent::type_id::create("slave_agent", this);
 		
-	if (!uvm_config_db#(virtual fpt_apb_if)::get(null, "", "fpt_apb_vif", vif)) begin
+	if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
 		`uvm_fatal(get_full_name(), "No virtual interface specified for env")
 	end
 		

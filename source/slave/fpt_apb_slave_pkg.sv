@@ -8,6 +8,12 @@ package fpt_apb_slave_pkg;
     import uvm_pkg::*;
     import fpt_apb_global_pkg::*;
     import fpt_apb_enum_pkg::*;
+
+    typedef virtual fpt_apb_if #(
+        .DATA_WIDTH (`FPT_APB_DATA_WIDTH),
+        .ADDR_WIDTH (`FPT_APB_ADDR_WIDTH)
+    ) fpt_apb_vif_t;
+
     `include "fpt_apb_slave_seq_item.svh"
     `include "fpt_apb_slave_sequence.svh"
     `include "fpt_apb_slave_sequencer.svh"

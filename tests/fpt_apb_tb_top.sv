@@ -38,7 +38,7 @@ module fpt_apb_tb_top;
     end
 
     initial begin
-        uvm_config_db#(virtual fpt_apb_if)::set(
+        uvm_config_db#(fpt_apb_vif_t)::set(
             null, "*", "fpt_apb_vif", apb_if
         );
 
