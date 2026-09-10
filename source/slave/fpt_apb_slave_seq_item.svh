@@ -19,8 +19,8 @@ class fpt_apb_slave_seq_item extends uvm_sequence_item;
     rand int unsigned delay;
 
     // Constraints
-    // 1. PREADY: delayed for a number of time unit
-    constraint c_pready_delay {soft delay inside {[1:100]};}
+    // 1. PREADY: delayed for a number cycles
+    constraint c_pready_delay {soft delay inside {[0:5]};}
 
     // 2. PSLVERR: 95% NO_ERROR, 5% ERROR
     constraint c_pslverr {

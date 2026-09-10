@@ -48,21 +48,22 @@ task fpt_apb_slave_driver::get_and_drive();
     init_signals();
 
 	forever begin 
-		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
-		seq_item_port.get_next_item(m_apb_slave_seq_item);
-		
         //  Skip all PRESETn cycles while waiting for Wait for PSEL and PENABLE
 		do begin
             @(vif.slave_drv_cb);
             if (!vif.PRESETn) begin
                 init_signals();
-                return;
+                continue;
             end
         end while (!(vif.slave_drv_cb.PSEL &&
                     vif.slave_drv_cb.PENABLE));
-		
-        // Simulation time unit delay
-		#(m_apb_slave_seq_item.delay);
+
+        m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
+		seq_item_port.get_next_item(m_apb_slave_seq_item);
+
+        // Cycle delay
+		repeat (m_apb_slave_seq_item.delay)
+            @(vif.slave_drv_cb);
 
         // Make sure PRESETn is not asserted after delay
         if (!vif.PRESETn) begin
@@ -71,7 +72,7 @@ task fpt_apb_slave_driver::get_and_drive();
             continue;
         end
 		
-        // Drive PREADY and PSLVERR
+        // else Drive PREADY and PSLVERR
         vif.slave_drv_cb.PREADY <= 1'b1;
         vif.slave_drv_cb.PSLVERR <= m_apb_slave_seq_item.PSLVERR;
 		

@@ -43,40 +43,78 @@ task fpt_apb_master_driver::get_and_drive();
     
     // Thêm vòng lặp forever để liên tục nhận transaction
     forever begin
+        int unsigned wait_cycles;
         // 1. Nhận item từ sequencer
         seq_item_port.get_next_item(req);
         
         // Căn chỉnh theo sườn clock trước khi bắt đầu transfer
-        @(posedge vif.PCLK);
+        @(vif.master_drv_cb);
 
         // ---------------------------------------------------------
         // SETUP PHASE
         // ---------------------------------------------------------
-        vif.PSEL    <= 1'b1;
-        vif.PENABLE <= 1'b0;
+        vif.master_drv_cb.PSEL    <= 1'b1;
+        vif.master_drv_cb.PENABLE <= 1'b0;
         
         // Mẹo: Thay vì fix cứng 1'b0 (chỉ Read), bạn có thể dùng req.PWRITE 
         // để driver này hỗ trợ cả lệnh Read và lệnh Write nhé.
-        vif.PWRITE  <= 1'b0; 
-        
-        vif.PADDR   <= req.PADDR; 
+        vif.master_drv_cb.PWRITE  <= req.PWRITE; 
+        vif.master_drv_cb.PADDR   <= req.PADDR; 
 
         // ---------------------------------------------------------
         // ACCESS PHASE
         // ---------------------------------------------------------
-        @(posedge vif.PCLK);
-        vif.PENABLE <= 1'b1;
+        @(vif.master_drv_cb);
+        vif.master_drv_cb.PENABLE <= 1'b1;
+
+        
+
+        // Wait for PREADY, timeout if cycles > 100
+        forever begin
+            @(vif.master_drv_cb);
+
+            // Reset occurred during the transfer.
+            if (!vif.PRESETn) begin
+                init_signals();
+                seq_item_port.item_done();
+                return;
+            end
+
+            // APB transfer completed.
+            if (vif.master_drv_cb.PREADY === 1'b1)
+                break;
+
+            wait_cycles++;
+
+            if (wait_cycles >= 100) begin
+                `uvm_error(
+                    "APB_TIMEOUT",
+                    $sformatf(
+                        "PREADY was not asserted after %0d ACCESS cycles",
+                        wait_cycles
+                    )
+                )
+
+                init_signals();
+                seq_item_port.item_done();
+                return;
+            end
+        end
 
         // ---------------------------------------------------------
         // COMPLETION & DATA CAPTURE
         // ---------------------------------------------------------
-        @(posedge vif.PCLK);
         // Do không có wait states (mặc định PREADY = 1), lấy data ngay
-        req.PRDATA = vif.PRDATA; 
+        req.PREADY  = vif.master_drv_cb.PREADY;
+        req.PSLVERR =  slave_error_e'(vif.master_drv_cb.PSLVERR);
+
+        if (!req.PWRITE)
+            req.PRDATA = vif.master_drv_cb.PRDATA;
+
         
         // Đưa tín hiệu về trạng thái idle
-        vif.PSEL    <= 1'b0;
-        vif.PENABLE <= 1'b0;
+        vif.master_drv_cb.PSEL    <= 1'b0;
+        vif.master_drv_cb.PENABLE <= 1'b0;
         
         // 2. BẮT BUỘC CÓ: Báo cho sequencer biết transaction đã hoàn tất
         seq_item_port.item_done();

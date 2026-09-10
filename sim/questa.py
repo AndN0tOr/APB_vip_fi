@@ -79,7 +79,17 @@ def main():
     if gui:
         run([
             VSIM,
+            "-voptargs=+acc",
             "work.fpt_apb_tb_top",
+            "-do",
+            (
+                "view wave; "
+                "add wave sim:/fpt_apb_tb_top/PCLK; "
+                "add wave sim:/fpt_apb_tb_top/PRESETn; "
+                "add wave -r sim:/fpt_apb_tb_top/apb_if/*; "
+                "run -all; "
+                "wave zoom full"
+            ),
         ])
     else:
         run([

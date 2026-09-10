@@ -167,10 +167,24 @@ endfunction  : end_of_elaboration_phase
 //  phase - uvm phase
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::run_phase(uvm_phase phase);
+    fpt_apb_master_seq master_seq;
+    fpt_apb_slave_seq  slave_seq;
 
     phase.raise_objection(this);
-    super.run_phase(phase);
-    #10;
+
+    master_seq = fpt_apb_master_seq::type_id::create("master_seq");
+    slave_seq  = fpt_apb_slave_seq::type_id::create("slave_seq");
+    
+    fork
+        master_seq.start(
+            apb_env_h.master_agent.m_apb_master_sequencer
+        );
+
+        slave_seq.start(
+            apb_env_h.slave_agent.m_apb_slave_sequencer
+        );
+    join
+    
     phase.drop_objection(this);
 
 endtask : run_phase
