@@ -9,6 +9,7 @@ modelsim.ini
 novas.rc
 novas.conf
 verdiLog
+vcs11.py
 csrc
 simv
 simv.daidir
