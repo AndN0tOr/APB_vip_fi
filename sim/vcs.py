@@ -62,7 +62,11 @@ def main():
         "-full64",
         "-sverilog",
         "-ntb_opts", "uvm",
+        "-timescale=1ns/1ps",
         "-f", str(flist_path),
+        "-top", "fpt_apb_tb_top",
+        "-debug_access+all",
+        "-kdb",
         "-l", "compile.log",
         "-o", "simv",
     ]
