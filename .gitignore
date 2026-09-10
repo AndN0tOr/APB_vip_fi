@@ -3,7 +3,9 @@ work
 run -all
 transcript
 sim/build/
-
+modelsim.ini
 
 # Synopsys Build Files
-
+csrc
+simv.daidir
+vc_hdrs.h
