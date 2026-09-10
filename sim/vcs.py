@@ -33,7 +33,6 @@ VCS = tool("vcs")
 
 def run(command, cwd=BUILD):
     print("+", " ".join(map(str, command)))
-    # Inject ROOT variable into environment so flist.f can resolve $ROOT paths
     env = os.environ.copy()
     env["ROOT"] = str(ROOT)
 
@@ -46,11 +45,8 @@ def run(command, cwd=BUILD):
 
 
 def main():
-    gui = "--gui" in sys.argv
-
     BUILD.mkdir(parents=True, exist_ok=True)
 
-    # Locates flist.f in the parent folder of sim/
     flist_path = SCRIPT_DIR.parent / "flist.f"
 
     if not flist_path.exists():
@@ -61,29 +57,26 @@ def main():
         VCS,
         "-full64",
         "-sverilog",
+        "-timescale=1ns/1ps",
         "-ntb_opts", "uvm",
+        "-top", "fpt_apb_tb_top",      # Đã cập nhật đúng tên top module của bạn
+        "-debug_access+all",           # Bắt buộc giữ để file tb_top có thể dump tín hiệu
+        "-kdb",                        # Sinh KDB cho Verdi
         "-f", str(flist_path),
         "-l", "compile.log",
         "-o", "simv",
     ]
 
-    # Add GUI debug flags if running in GUI mode
-    if gui:
-        vcs_command.extend(["-debug_access+all", "-gui"])
-
     # Run VCS Compilation
     run(vcs_command)
 
-    # Step 2: Run Simulation Executable
+    # Step 2: Run Simulation Executable (Đã xóa option tự động dump fsdb)
     simv_executable = BUILD / "simv"
     
     sim_command = [
         simv_executable,
         "-l", "simulation.log",
     ]
-
-    if gui:
-        sim_command.append("-gui")
 
     run(sim_command)
 
