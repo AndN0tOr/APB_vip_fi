@@ -13,7 +13,7 @@ package fpt_apb_slave_pkg;
     import fpt_apb_typedef_pkg::*;
 
     `include "fpt_apb_slave_seq_item.svh"
-    `include "fpt_apb_slave_sequence.svh"
+    `include "fpt_apb_slave_seq.svh"
     `include "fpt_apb_slave_sequencer.svh"
     `include "fpt_apb_slave_driver.svh"
     `include "fpt_apb_slave_agent.svh"

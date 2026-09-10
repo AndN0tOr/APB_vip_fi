@@ -1,5 +1,5 @@
-`ifndef FPT_APB_SLAVE_SEQUENCE_SVH
-`define FPT_APB_SLAVE_SEQUENCE_SVH
+`ifndef FPT_APB_SLAVE_SEQ_SVH
+`define FPT_APB_SLAVE_SEQ_SVH
 
 class fpt_apb_slave_seq extends uvm_sequence#(fpt_apb_slave_seq_item);
 
