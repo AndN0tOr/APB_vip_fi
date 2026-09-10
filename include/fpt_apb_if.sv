@@ -1,6 +1,8 @@
 `ifndef FPT_APB_IF_SV
 `define FPT_APB_IF_SV
 
+`timescale 1ns/1ps
+
 interface fpt_apb_if #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 16

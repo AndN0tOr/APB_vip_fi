@@ -1,6 +1,9 @@
 `ifndef FPT_APB_MASTER_DRIVER_SVH
 `define FPT_APB_MASTER_DRIVER_SVH
 
+`timescale 1ns/1ps
+
+
 class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     `uvm_component_utils(fpt_apb_master_driver)
     fpt_apb_vif_t vif;

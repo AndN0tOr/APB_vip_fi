@@ -1,8 +1,8 @@
 `ifndef FPT_APB_ENV_SVH
 `define FPT_APB_ENV_SVH
 
-// import uvm_pkg::*;
-// `include "uvm_macros.svh" 
+import uvm_pkg::*;
+`include "uvm_macros.svh" 
 
 // import apb_master_pkg::*;
 // import apb_slave_pkg::*;
