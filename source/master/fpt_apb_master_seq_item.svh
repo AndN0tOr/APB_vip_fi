@@ -97,17 +97,17 @@ endfunction : do_compare
 //  printer - uvm_printer
 //--------------------------------------------------------------------------------------------
 function void fpt_apb_master_seq_item::do_print(uvm_printer printer);
-    super.do_print(printer);
+    //super.do_print(printer);
 
     printer.print_field("PADDR",   PADDR,   $bits(PADDR),   UVM_HEX);
-    printer.print_field("PSEL",    PSEL,    $bits(PSEL),    UVM_BIN);
+    //printer.print_field("PSEL",    PSEL,    $bits(PSEL),    UVM_BIN);
     printer.print_string("PWRITE", PWRITE.name());
-    printer.print_field("PENABLE", PENABLE, $bits(PENABLE), UVM_BIN);
+    //printer.print_field("PENABLE", PENABLE, $bits(PENABLE), UVM_BIN);
     printer.print_field("PWDATA",  PWDATA,  $bits(PWDATA),  UVM_HEX);
-    printer.print_field("PSTRB",   PSTRB,   $bits(PSTRB),   UVM_HEX);
-    printer.print_field("PREADY",  PREADY,  $bits(PREADY),  UVM_BIN);
-    printer.print_field("PRDATA",  PRDATA,  $bits(PRDATA),  UVM_HEX);
-    printer.print_string("PSLVERR", PSLVERR.name());
+    printer.print_field("PSTRB",   PSTRB,   $bits(PSTRB),   UVM_BIN);
+    //printer.print_field("PREADY",  PREADY,  $bits(PREADY),  UVM_BIN);
+    //printer.print_field("PRDATA",  PRDATA,  $bits(PRDATA),  UVM_HEX);
+    //printer.print_string("PSLVERR", PSLVERR.name());
     printer.print_field("delay", delay, $bits(delay), UVM_DEC);
 endfunction : do_print
 

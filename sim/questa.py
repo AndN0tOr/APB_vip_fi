@@ -46,7 +46,14 @@ def run(command):
 
 
 def main():
-    gui = "--gui" in sys.argv
+    arguments = sys.argv[1:]
+
+    gui = "--gui" in arguments
+    plusargs = [
+        argument
+        for argument in arguments
+        if argument.startswith("+")
+    ]
 
     BUILD.mkdir(parents=True, exist_ok=True)
 
@@ -77,10 +84,11 @@ def main():
     run(vlog_command)
 
     if gui:
-        run([
+       run([
             VSIM,
             "-voptargs=+acc",
             "work.fpt_apb_tb_top",
+            *plusargs,
             "-do",
             (
                 "view wave; "
@@ -98,6 +106,7 @@ def main():
             "-l",
             "simulation.log",
             "work.fpt_apb_tb_top",
+            *plusargs,
             "-do",
             "onerror {quit -f -code 1}; run -all; quit -f -code 0",
         ])
