@@ -7,5 +7,6 @@ modelsim.ini
 
 # Synopsys Build Files
 csrc
+simv
 simv.daidir
 vc_hdrs.h
