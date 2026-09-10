@@ -110,6 +110,10 @@ task fpt_apb_master_driver::get_and_drive();
 
         if (!req.PWRITE)
             req.PRDATA = vif.master_drv_cb.PRDATA;
+        else begin 
+            vif.master_drv_cb.PSTRB <= req.PSTRB;
+            vif.master_drv_cb.PWDATA <= req.PWDATA;
+        end 
 
         
         // Đưa tín hiệu về trạng thái idle
