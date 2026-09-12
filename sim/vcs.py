@@ -29,11 +29,11 @@ else:
         return executable
 
 VCS = tool("vcs")
+URG = tool("urg")  # Khai báo công cụ URG để xuất báo cáo coverage
 
 
 def run(command, cwd=BUILD):
     print("+", " ".join(map(str, command)))
-    # Inject ROOT variable into environment so flist.f can resolve $ROOT paths
     env = os.environ.copy()
     env["ROOT"] = str(ROOT)
 
@@ -47,10 +47,10 @@ def run(command, cwd=BUILD):
 
 def main():
     gui = "--gui" in sys.argv
+    cov = "--cov" in sys.argv
 
     BUILD.mkdir(parents=True, exist_ok=True)
 
-    # Locates flist.f in the parent folder of sim/
     flist_path = SCRIPT_DIR.parent / "flist.f"
 
     if not flist_path.exists():
@@ -71,9 +71,11 @@ def main():
         "-o", "simv",
     ]
 
-    # Add GUI debug flags if running in GUI mode
     if gui:
-        vcs_command.extend(["-debug_access+all", "-gui"])
+        vcs_command.extend(["-gui"])
+    if cov:
+        # Sửa chính tả 'brancg' -> 'branch' và chỉ định thư mục lưu database coverage (.vdb)
+        vcs_command.extend(["-cm", "line+cond+fsm+tgl+branch+assert", "-cm_dir", "simv.vdb"])
 
     # Run VCS Compilation
     run(vcs_command)
@@ -88,8 +90,21 @@ def main():
 
     if gui:
         sim_command.append("-gui")
+    if cov:
+        # Sửa lỗi cú pháp .extend() truyền sai tham số
+        sim_command.extend(["-cm", "line+cond+fsm+tgl+branch+assert", "-cm_dir", "simv.vdb"])
 
     run(sim_command)
+
+    # Step 3: Generate Coverage Report using URG
+    if cov:
+        urg_command = [
+            URG,
+            "-dir", "simv.vdb",
+            "-report", "urgReport",      # Tạo thư mục urgReport chứa file HTML
+            "-format", "both",           # Xuất ra cả file HTML và Text summary
+        ]
+        run(urg_command)
 
 
 if __name__ == "__main__":
