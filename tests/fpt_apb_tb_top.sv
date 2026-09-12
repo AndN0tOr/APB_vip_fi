@@ -38,7 +38,7 @@ module fpt_apb_tb_top;
     initial begin
         PRESETn = 1'b0;
 
-        repeat (2) @(posedge PCLK);
+        repeat (2) @(negedge PCLK);
         PRESETn <= 1'b1;
     end
     initial begin

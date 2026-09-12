@@ -38,49 +38,51 @@ task fpt_apb_master_driver::init_signals();
 endtask		
 
 task fpt_apb_master_driver::get_and_drive();
-    // Khởi tạo tín hiệu một lần duy nhất trước khi vào vòng lặp
-    init_signals();
-    
-    // Thêm vòng lặp forever để liên tục nhận transaction
-    forever begin
-        int unsigned wait_cycles;
-        // 1. Nhận item từ sequencer
-        seq_item_port.get_next_item(req);
-        
-        // Căn chỉnh theo sườn clock trước khi bắt đầu transfer
-        @(vif.master_drv_cb);
+    int unsigned wait_cycles;
 
-        // ---------------------------------------------------------
+    init_signals();
+
+    // Obtain the first transaction.
+    seq_item_port.get_next_item(req);
+    @(vif.master_drv_cb);
+
+    forever begin
+        // -----------------------------------------------------
         // SETUP PHASE
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
         vif.master_drv_cb.PSEL    <= 1'b1;
         vif.master_drv_cb.PENABLE <= 1'b0;
-        
-        // Mẹo: Thay vì fix cứng 1'b0 (chỉ Read), bạn có thể dùng req.PWRITE 
-        // để driver này hỗ trợ cả lệnh Read và lệnh Write nhé.
-        vif.master_drv_cb.PWRITE  <= req.PWRITE; 
-        vif.master_drv_cb.PADDR   <= req.PADDR; 
+        vif.master_drv_cb.PADDR   <= req.PADDR;
+        vif.master_drv_cb.PWRITE  <= req.PWRITE;
 
-        // ---------------------------------------------------------
+        // PWDATA and PSTRB must be driven during setup,
+        // not after the transfer has completed.
+        if (req.PWRITE == WRITE) begin
+            vif.master_drv_cb.PWDATA <= req.PWDATA;
+            vif.master_drv_cb.PSTRB  <= req.PSTRB;
+        end
+        else begin
+            vif.master_drv_cb.PWDATA <= '0;
+            vif.master_drv_cb.PSTRB  <= '0;
+        end
+
+        // -----------------------------------------------------
         // ACCESS PHASE
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
         @(vif.master_drv_cb);
         vif.master_drv_cb.PENABLE <= 1'b1;
 
-        
+        wait_cycles = 0;
 
-        // Wait for PREADY, timeout if cycles > 100
         forever begin
             @(vif.master_drv_cb);
 
-            // Reset occurred during the transfer.
             if (!vif.PRESETn) begin
                 init_signals();
                 seq_item_port.item_done();
                 return;
             end
 
-            // APB transfer completed.
             if (vif.master_drv_cb.PREADY === 1'b1)
                 break;
 
@@ -90,7 +92,7 @@ task fpt_apb_master_driver::get_and_drive();
                 `uvm_error(
                     "APB_TIMEOUT",
                     $sformatf(
-                        "PREADY was not asserted after %0d ACCESS cycles",
+                        "PREADY was not asserted after %0d access cycles",
                         wait_cycles
                     )
                 )
@@ -101,27 +103,35 @@ task fpt_apb_master_driver::get_and_drive();
             end
         end
 
-        // ---------------------------------------------------------
-        // COMPLETION & DATA CAPTURE
-        // ---------------------------------------------------------
-        // Do không có wait states (mặc định PREADY = 1), lấy data ngay
-        req.PREADY  = vif.master_drv_cb.PREADY;
-        req.PSLVERR =  slave_error_e'(vif.master_drv_cb.PSLVERR);
+        // -----------------------------------------------------
+        // COMPLETION
+        // -----------------------------------------------------
+        req.PREADY = vif.master_drv_cb.PREADY;
+        req.PSLVERR =
+            slave_error_e'(vif.master_drv_cb.PSLVERR);
 
-        if (!req.PWRITE)
+        if (req.PWRITE == READ)
             req.PRDATA = vif.master_drv_cb.PRDATA;
-        else begin 
-            vif.master_drv_cb.PSTRB <= req.PSTRB;
-            vif.master_drv_cb.PWDATA <= req.PWDATA;
-        end 
 
-        
-        // Đưa tín hiệu về trạng thái idle
-        vif.master_drv_cb.PSEL    <= 1'b0;
-        vif.master_drv_cb.PENABLE <= 1'b0;
-        
-        // 2. BẮT BUỘC CÓ: Báo cho sequencer biết transaction đã hoàn tất
         seq_item_port.item_done();
+
+        // Give the sequencer an opportunity to provide the next item.
+        req = null;
+        seq_item_port.try_next_item(req);
+
+        if (req == null) begin
+            // No immediate transaction: enter the IDLE phase.
+            vif.master_drv_cb.PSEL    <= 1'b0;
+            vif.master_drv_cb.PENABLE <= 1'b0;
+
+            // Wait until another transaction becomes available.
+            seq_item_port.get_next_item(req);
+            @(vif.master_drv_cb);
+        end
+
+        // If try_next_item returned an item, the loop immediately
+        // drives its setup phase at the current completion edge.
+        // PSEL consequently remains asserted.
     end
 endtask
 
