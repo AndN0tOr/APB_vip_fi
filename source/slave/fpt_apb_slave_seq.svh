@@ -31,7 +31,7 @@ task fpt_apb_slave_seq::body();
         `uvm_fatal(get_type_name(), "Cannot open transaction log")
 	end
 	
-	repeat(10) begin
+	repeat(100) begin
 		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
 		start_item(m_apb_slave_seq_item);
 		assert (m_apb_slave_seq_item.randomize());

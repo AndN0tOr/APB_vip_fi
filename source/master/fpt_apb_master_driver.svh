@@ -10,8 +10,7 @@ class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     extern virtual task run_phase(uvm_phase phase);
     // extern virtual task wait_for_reset();
 	extern virtual task get_and_drive();
-    // extern virtual task read_method();
-    // extern virtual task write_method();
+    extern virtual task setup_phase();
 	extern virtual task init_signals();
 endclass
 
@@ -35,59 +34,50 @@ endtask
 task fpt_apb_master_driver::init_signals();
 	vif.master_drv_cb.PSEL  <= 1'b0;
     vif.master_drv_cb.PENABLE <= 1'b0;
-endtask		
+    vif.master_drv_cb.PADDR <= 'x;
+    vif.master_drv_cb.PWDATA <= 'x;
+    vif.master_drv_cb.PSTRB <= 'x;
+    vif.master_drv_cb.PWRITE <= 'x;
+endtask
+
+task fpt_apb_master_driver::setup_phase();
+    // Control signals
+    vif.master_drv_cb.PSEL <= 1'b1;
+    vif.master_drv_cb.PENABLE <= 1'b0;
+    // Address + Data signal
+    vif.master_drv_cb.PADDR <= req.PADDR;
+    vif.master_drv_cb.PWDATA <= req.PWDATA;
+    vif.master_drv_cb.PSTRB <= req.PSTRB;
+    vif.master_drv_cb.PWRITE <= req.PWRITE;
+    // just pass signals to the interface, the seq handle the data
+endtask
 
 task fpt_apb_master_driver::get_and_drive();
     int unsigned wait_cycles;
 
     init_signals();
-
     // Obtain the first transaction.
     seq_item_port.get_next_item(req);
     @(vif.master_drv_cb);
 
     forever begin
-        // -----------------------------------------------------
-        // SETUP PHASE
-        // -----------------------------------------------------
-        vif.master_drv_cb.PSEL    <= 1'b1;
-        vif.master_drv_cb.PENABLE <= 1'b0;
-        vif.master_drv_cb.PADDR   <= req.PADDR;
-        vif.master_drv_cb.PWRITE  <= req.PWRITE;
-
-        // PWDATA and PSTRB must be driven during setup,
-        // not after the transfer has completed.
-        if (req.PWRITE == WRITE) begin
-            vif.master_drv_cb.PWDATA <= req.PWDATA;
-            vif.master_drv_cb.PSTRB  <= req.PSTRB;
-        end
-        else begin
-            vif.master_drv_cb.PWDATA <= '0;
-            vif.master_drv_cb.PSTRB  <= '0;
-        end
-
-        // -----------------------------------------------------
+        // SETUP PHASE--
+        setup_phase();
         // ACCESS PHASE
-        // -----------------------------------------------------
         @(vif.master_drv_cb);
         vif.master_drv_cb.PENABLE <= 1'b1;
-
         wait_cycles = 0;
-
         forever begin
             @(vif.master_drv_cb);
-
             if (!vif.PRESETn) begin
                 init_signals();
                 seq_item_port.item_done();
                 return;
             end
-
             if (vif.master_drv_cb.PREADY === 1'b1)
                 break;
 
             wait_cycles++;
-
             if (wait_cycles >= 100) begin
                 `uvm_error(
                     "APB_TIMEOUT",
@@ -96,7 +86,6 @@ task fpt_apb_master_driver::get_and_drive();
                         wait_cycles
                     )
                 )
-
                 init_signals();
                 seq_item_port.item_done();
                 return;
@@ -106,7 +95,6 @@ task fpt_apb_master_driver::get_and_drive();
         // -----------------------------------------------------
         // COMPLETION
         // -----------------------------------------------------
-        req.PREADY = vif.master_drv_cb.PREADY;
         req.PSLVERR =
             slave_error_e'(vif.master_drv_cb.PSLVERR);
 
@@ -123,7 +111,6 @@ task fpt_apb_master_driver::get_and_drive();
             // No immediate transaction: enter the IDLE phase.
             vif.master_drv_cb.PSEL    <= 1'b0;
             vif.master_drv_cb.PENABLE <= 1'b0;
-
             // Wait until another transaction becomes available.
             seq_item_port.get_next_item(req);
             @(vif.master_drv_cb);

@@ -5,16 +5,13 @@ class fpt_apb_master_seq_item extends uvm_sequence_item;
     `uvm_object_utils(fpt_apb_master_seq_item)
 
     rand bit [`FPT_APB_ADDR_WIDTH-1:0] PADDR;
-    bit PSEL;
     rand tx_type_e PWRITE;
-    bit PENABLE;
     rand bit [`FPT_APB_DATA_WIDTH-1:0]PWDATA;
     rand bit [(`FPT_APB_DATA_WIDTH/8)-1:0]PSTRB; 
 
-    bit PREADY; 
-    bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
-    slave_error_e PSLVERR;
-    int unsigned delay;
+    rand bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
+    rand slave_error_e PSLVERR;
+    rand int unsigned delay;
 
     constraint pstrb_read_pstrb_c {(PWRITE == READ) -> (PSTRB == '0);}
 
@@ -47,14 +44,10 @@ function void fpt_apb_master_seq_item::do_copy(uvm_object rhs);
     end
 
     super.do_copy(rhs);
-
     PADDR   = rhs_item.PADDR;
-    PSEL    = rhs_item.PSEL;
     PWRITE  = rhs_item.PWRITE;
-    PENABLE = rhs_item.PENABLE;
     PWDATA  = rhs_item.PWDATA;
     PSTRB   = rhs_item.PSTRB;
-    PREADY  = rhs_item.PREADY;
     PRDATA  = rhs_item.PRDATA;
     PSLVERR = rhs_item.PSLVERR;
     delay   = rhs_item.delay;
@@ -80,12 +73,9 @@ function bit fpt_apb_master_seq_item::do_compare(
 
     return super.do_compare(rhs, comparer) &&
            (PADDR   == rhs_item.PADDR)   &&
-           (PSEL    == rhs_item.PSEL)    &&
            (PWRITE  == rhs_item.PWRITE)  &&
-           (PENABLE == rhs_item.PENABLE) &&
            (PWDATA  == rhs_item.PWDATA)  &&
            (PSTRB   == rhs_item.PSTRB)   &&
-           (PREADY  == rhs_item.PREADY)  &&
            (PRDATA  == rhs_item.PRDATA)  &&
            (PSLVERR == rhs_item.PSLVERR) &&
            (delay   == rhs_item.delay);
