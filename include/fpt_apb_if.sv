@@ -52,7 +52,7 @@ interface fpt_apb_if #(
 
     PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL))
         else $error("PSEL don't drop when PRESETn was asserted");
-    PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE));
+    PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE))
         else $error("PENABLE don't drop when PRESETn was asserted");
     
     property PRESETn_RISE_SIGNALS (signal);
