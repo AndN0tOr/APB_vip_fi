@@ -50,14 +50,17 @@ interface fpt_apb_if #(
         @(posedge PCLK) !PRESETn |-> !signal;
     endproperty: PRESETn_DROP_SIGNALS
 
-    PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL));
+    PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL))
+        else $error("PSEL don't drop when PRESETn was asserted");
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE));
+        else $error("PENABLE don't drop when PRESETn was asserted");
     
     property PRESETn_RISE_SIGNALS (signal);
         @(posedge PCLK) !PRESETn |-> signal;
     endproperty: PRESETn_RISE_SIGNALS
 
-    PRESETn_RISE_PREADY:assert property(PRESETn_RISE_SIGNALS(PREADY));
+    PRESETn_RISE_PREADY:assert property(PRESETn_RISE_SIGNALS(PREADY))
+        else $error("PREADY don't rise when PRESETn was asserted low");
 
     //-----------------------------------------
     // Check if unknown values appear
