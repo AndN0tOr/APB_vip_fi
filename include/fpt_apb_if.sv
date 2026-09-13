@@ -52,6 +52,12 @@ interface fpt_apb_if #(
 
     PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL));
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE));
+    
+    property PRESETn_RISE_SIGNALS (signal);
+        @(posedge PCLK) !PRESETn |-> signal;
+    endproperty: PRESETn_RISE_SIGNALS
+
+    PRESETn_RISE_PREADY:assert property(PRESETn_RISE_SIGNALS(PREADY));
 
     //-----------------------------------------
     // Check if unknown values appear
@@ -81,7 +87,45 @@ interface fpt_apb_if #(
     CHK_X_PSLVERR: assert property (p_no_x(PSEL && PENABLE, PSLVERR))
         else $error("PSLVERR is unknown during the ACCESS phase");
 
-    
+
+    property p_setup_to_access;
+        @(posedge PCLK) disable iff (!PRESETn) 
+        (PSEL && !PENABLE) |=> (PSEL && PENABLE);
+    endproperty
+
+    CHK_SETUP_TO_ACCESS: assert property(p_setup_to_access)
+    else $error("Protocol Violation: SETUP phase did not transition to ACCESS phase.");
+
+    property p_no_access_without_setup;
+    @(posedge PCLK) disable iff (!PRESETn)
+    $rose(PENABLE) |-> $past(PSEL) && !$past(PENABLE);
+    endproperty
+
+    CHK_NO_ACCESS_WITHOUT_SETUP: assert property(p_no_access_without_setup)
+    else $error("Protocol Violation: PENABLE asserted without a preceding SETUP phase.");
+
+    property p_access_wait_state;
+    @(posedge PCLK) disable iff (!PRESETn)
+    (PSEL && PENABLE && !PREADY) |=> (PSEL && PENABLE);
+    endproperty
+
+    CHK_ACCESS_WAIT_STATE: assert property(p_access_wait_state)
+    else $error("Protocol Violation: PSEL or PENABLE dropped during wait state (!PREADY).");
+
+    property p_access_completion;
+    @(posedge PCLK) disable iff (!PRESETn)
+    (PSEL && PENABLE && PREADY) |=> (!PENABLE);
+    endproperty
+
+    CHK_ACCESS_COMPLETION: assert property(p_access_completion)
+    else $error("Protocol Violation: PENABLE did not deassert after transfer completion.");
+
+    property p_back_to_back_transfer;
+    @(posedge PCLK) disable iff (!PRESETn)(PSEL && PENABLE && PREADY) |=> (PSEL |-> !PENABLE);
+    endproperty
+
+    CHK_BACK_TO_BACK_TRANSFER: assert property(p_back_to_back_transfer)
+    else $error("Protocol Violation: Invalid Back-to-Back transfer. PENABLE must drop to 0.");
 
 endinterface
 
