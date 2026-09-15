@@ -46,21 +46,25 @@ interface fpt_apb_if #(
     endclocking
 
 
-    property PRESETn_DROP_SIGNALS (signal);
-        @(posedge PCLK) !PRESETn |-> !signal;
-    endproperty: PRESETn_DROP_SIGNALS
+    bit assertions_armed = 1'b0;
 
+    always @(posedge PCLK)
+        assertions_armed <= 1'b1;
+
+    property PRESETn_DROP_SIGNALS(signal);
+        @(posedge PCLK)
+        (assertions_armed && !PRESETn) |-> (signal === 1'b0);
+    endproperty
+        //
     PRESETn_DROP_PSEL:assert property(PRESETn_DROP_SIGNALS(PSEL))
-        else $error("PSEL don't drop when PRESETn was asserted");
+        else $error("PSEL don't drop when PRESETn was asserted. PRESETn=%b, PSEL=%b",
+    $sampled(PRESETn), $sampled(PSEL));
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE))
-        else $error("PENABLE don't drop when PRESETn was asserted");
-    
-    property PRESETn_RISE_SIGNALS (signal);
-        @(posedge PCLK) !PRESETn |-> signal;
-    endproperty: PRESETn_RISE_SIGNALS
-
-    PRESETn_RISE_PREADY:assert property(PRESETn_RISE_SIGNALS(PREADY))
-        else $error("PREADY don't rise when PRESETn was asserted low");
+        else $error("PENABLE don't drop when PRESETn was asserted. PRESETn=%b, PENABLE=%b ",
+    $sampled(PRESETn), $sampled(PENABLE));
+    PRESETn_DROP_PREADY:assert property(PRESETn_DROP_SIGNALS(PREADY))
+        else $error("PREADY don't rise when PRESETn was asserted low. PRESETn=%b, PREADY=%b",
+    $sampled(PRESETn), $sampled(PREADY));
 
     //-----------------------------------------
     // Check if unknown values appear
