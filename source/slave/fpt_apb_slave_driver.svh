@@ -45,6 +45,7 @@ endtask
 // Task: get_and_drive
 // Definition:	this task call drive signals.
 task fpt_apb_slave_driver::get_and_drive();
+    bit aborted;
     init_signals();
 
 	forever begin
@@ -62,46 +63,54 @@ task fpt_apb_slave_driver::get_and_drive();
                    vif.slave_drv_cb.PSEL !== 1'b1 ||
                    vif.slave_drv_cb.PENABLE !== 1'b0);
 
-		// ACCESS must follow SETUP on the next clock edge.
-		@(vif.slave_drv_cb);
-        if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1) begin
-            init_signals();
-            seq_item_port.item_done();
-            continue;
-        end
-        if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
-            `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
-            init_signals();
-            seq_item_port.item_done();
-            continue;
-        end
+        // Count wait states from SETUP. For delay=0, drive the response
+        // now so it is valid during the very first ACCESS cycle.
+        aborted = 1'b0;
+        for (int unsigned wait_cycle = 0;
+            wait_cycle < m_apb_slave_seq_item.delay;
+            wait_cycle++) 
 
-        // Cycle delay
-		repeat (m_apb_slave_seq_item.delay)
+            begin
             @(vif.slave_drv_cb);
+            if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1) begin
+                aborted = 1'b1;
+                break;
+            end
+            if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
+                `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
+                aborted = 1'b1;
+                break;
+            end
+        end
 
-        // Make sure PRESETn is not asserted after delay
-        if (!vif.PRESETn) begin
+        if (aborted) begin
             init_signals();
             seq_item_port.item_done();
             continue;
         end
-		
-        // else Drive PREADY and PSLVERR
+
+        // The master samples these outputs at the next rising edge.
         vif.slave_drv_cb.PREADY <= 1'b1;
         vif.slave_drv_cb.PSLVERR <= m_apb_slave_seq_item.PSLVERR;
-		
-		if(!vif.slave_drv_cb.PWRITE)
-			vif.slave_drv_cb.PRDATA <= m_apb_slave_seq_item.PRDATA;
-		else
-        vif.slave_drv_cb.PRDATA <= '0;
 
-        @ (vif.slave_drv_cb);
-		vif.slave_drv_cb.PREADY <= 1'b0;	
-        vif.slave_drv_cb.PSLVERR <= 1'b0;		
-		
-		seq_item_port.item_done();
-		`uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW);
+        if (vif.slave_drv_cb.PWRITE === 1'b0)
+            vif.slave_drv_cb.PRDATA <= m_apb_slave_seq_item.PRDATA;
+        else
+            vif.slave_drv_cb.PRDATA <= '0;
+
+        // This edge is the completion edge when PREADY is high.
+        @(vif.slave_drv_cb);
+        if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1)
+            aborted = 1'b1;
+        else if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
+            `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
+            aborted = 1'b1;
+        end
+
+        init_signals();
+        seq_item_port.item_done();
+        if (!aborted)
+            `uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW)
 	end				
 endtask
 
