@@ -8,7 +8,6 @@ class fpt_apb_slave_agent extends uvm_agent;
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
     fpt_apb_slave_driver m_apb_slave_driver;
     fpt_apb_slave_sequencer m_apb_slave_sequencer;
-    fpt_apb_slave_monitor m_apb_slave_monitor;
     //Need monitor
 
     extern function new(string name = "fpt_apb_slave_agent", uvm_component parent = null);
@@ -30,7 +29,6 @@ function void fpt_apb_slave_agent::build_phase(uvm_phase phase);
 
     m_apb_slave_seq_item    = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
     m_apb_slave_driver      = fpt_apb_slave_driver::type_id::create("m_apb_slave_driver", this);
-    m_apb_slave_monitor     = fpt_apb_slave_monitor::type_id::create("m_apb_slave_monitor", this);
     m_apb_slave_sequencer   = fpt_apb_slave_sequencer::type_id::create("m_apb_slave_sequencer", this);
 endfunction: build_phase	
 
