@@ -8,7 +8,7 @@ class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     extern function new (string name = "fpt_apb_master_driver", uvm_component parent = null);
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual task run_phase(uvm_phase phase);
-    // extern virtual task wait_for_reset();
+    extern virtual task reset_handle();
 	extern virtual task get_and_drive();
     extern virtual task setup_phase();
 	extern virtual task init_signals();
@@ -27,10 +27,37 @@ endfunction: build_phase
 
 task fpt_apb_master_driver::run_phase(uvm_phase phase);
 	super.run_phase(phase);
-
-    get_and_drive();
+        forever begin
+            if (!vif.PRESETn) begin
+            init_signals();
+            @(posedge vif.PRESETn);
+            `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
+        end
+        forever begin
+            get_and_drive();
+        end
+        fork
+            begin
+                get_and_drive();
+            end
+            begin
+                @(negedge vif.PRESETn);
+            end
+        join_any
+        disable fork;
+        init_signals();
+        req = null; // Clear local reference safely
+    end
 endtask
-
+task fpt_apb_master_driver::reset_handle();
+    init_signals();
+    if (req!= null) begin
+        seq_item_port.item_done();
+        req = null;
+    end
+    @(posedge vif.PRESETn);
+        `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
+endtask
 task fpt_apb_master_driver::init_signals();
 	vif.master_drv_cb.PSEL  <= 1'b0;
     vif.master_drv_cb.PENABLE <= 1'b0;
