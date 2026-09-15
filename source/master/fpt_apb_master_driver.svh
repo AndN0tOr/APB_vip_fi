@@ -27,8 +27,8 @@ endfunction: build_phase
 
 task fpt_apb_master_driver::run_phase(uvm_phase phase);
 	super.run_phase(phase);
-        forever begin
-            if (!vif.PRESETn) begin
+    forever begin
+        if (!vif.PRESETn) begin
             init_signals();
             @(posedge vif.PRESETn);
             `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
