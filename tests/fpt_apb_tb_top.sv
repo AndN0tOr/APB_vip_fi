@@ -17,6 +17,7 @@ import fpt_apb_master_pkg::*;
 
 `include "../source/fpt_apb_env.svh"
 `include "fpt_apb_base_test.svh"
+`include "fpt_apb_rst_test.sv"
 `include "fpt_apb_sys_config.svh"
 
 module fpt_apb_tb_top;
@@ -37,10 +38,21 @@ module fpt_apb_tb_top;
     end
 
     initial begin
+        string selected_test;
         PRESETn = 1'b0;
 
         repeat (2) @(negedge PCLK);
         PRESETn <= 1'b1;
+
+        // Apply a second reset pulse only in the reset test.
+        if ($value$plusargs("UVM_TESTNAME=%s", selected_test) &&
+            selected_test == "fpt_apb_rst_test") begin
+            // repeat (5) @(posedge PCLK);
+            // PRESETn <= 1'b0;
+
+            // repeat (2) @(posedge PCLK);
+            // PRESETn <= 1'b1;
+        end
     end
     initial begin
         $fsdbDumpfile("novas.fsdb");
@@ -49,10 +61,13 @@ module fpt_apb_tb_top;
         $display("[TB_TOP] FSDB dumping enabled!"); // Thêm log để xác nhận block này đã chạy
     end
     initial begin
+        string selected_test;
         uvm_config_db#(fpt_apb_vif_t)::set(
             null, "*", "fpt_apb_vif", apb_if
         );
 
-        run_test("fpt_apb_base_test");
+        if (!$value$plusargs("UVM_TESTNAME=%s", selected_test))
+            selected_test = "fpt_apb_base_test";
+        run_test(selected_test);
     end
 endmodule : fpt_apb_tb_top

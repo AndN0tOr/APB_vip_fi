@@ -47,19 +47,34 @@ endtask
 task fpt_apb_slave_driver::get_and_drive();
     init_signals();
 
-	forever begin 
-        //  Skip all PRESETn cycles while waiting for Wait for PSEL and PENABLE
+	forever begin
+        // Keep one response item ready for the next observed transfer.
+        m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
+		seq_item_port.get_next_item(m_apb_slave_seq_item);
+
+		// SETUP: PSEL is high and PENABLE is low.
 		do begin
             @(vif.slave_drv_cb);
             if (!vif.PRESETn) begin
                 init_signals();
-                continue;
             end
-        end while (!(vif.slave_drv_cb.PSEL &&
-                    vif.slave_drv_cb.PENABLE));
+        end while (!vif.PRESETn ||
+                   vif.slave_drv_cb.PSEL !== 1'b1 ||
+                   vif.slave_drv_cb.PENABLE !== 1'b0);
 
-        m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
-		seq_item_port.get_next_item(m_apb_slave_seq_item);
+		// ACCESS must follow SETUP on the next clock edge.
+		@(vif.slave_drv_cb);
+        if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1) begin
+            init_signals();
+            seq_item_port.item_done();
+            continue;
+        end
+        if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
+            `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
+            init_signals();
+            seq_item_port.item_done();
+            continue;
+        end
 
         // Cycle delay
 		repeat (m_apb_slave_seq_item.delay)
