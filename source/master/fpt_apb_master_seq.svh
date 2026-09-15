@@ -4,6 +4,7 @@
 class fpt_apb_master_seq extends uvm_sequence#(fpt_apb_master_seq_item);
 
 	`uvm_object_utils(fpt_apb_master_seq)
+	int unsigned num_items = 100;
 	
 	extern function new (string name = "fpt_apb_master_seq");
 	extern task body();	
@@ -28,7 +29,7 @@ task fpt_apb_master_seq::body();
         `uvm_fatal(get_type_name(), "Cannot open transaction log")
 	end
 	
-	repeat(100) begin
+	repeat(num_items) begin
 		m_apb_master_seq_item = fpt_apb_master_seq_item::type_id::create("m_apb_master_seq_item");
 		start_item(m_apb_master_seq_item);
 		assert (m_apb_master_seq_item.randomize());
