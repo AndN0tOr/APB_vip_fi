@@ -17,6 +17,7 @@ package fpt_apb_slave_pkg;
     `include "fpt_apb_slave_sequencer.svh"
     `include "fpt_apb_slave_driver.svh"
     `include "fpt_apb_slave_agent.svh"
+    `include "fpt_apb_slave_monitor.svh"
 endpackage
 
 

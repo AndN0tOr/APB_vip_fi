@@ -5,6 +5,7 @@
 // `include "uvm_macros.svh" 
 
 `include "../tests/fpt_apb_sys_config.svh"
+`include "../tests/fpt_apb_mem_model_t.svh"
 
 class fpt_apb_env extends uvm_env;
 	`uvm_component_utils(fpt_apb_env)
@@ -12,6 +13,7 @@ class fpt_apb_env extends uvm_env;
 	//--------------------------------------------------------------------
 	//	Component Members
 	//--------------------------------------------------------------------	
+	fpt_apb_mem_model_t fpt_mem_model;
 	fpt_apb_sys_config fpt_sys_config;
 	fpt_apb_master_agent fpt_master_agents[];
 	fpt_apb_slave_agent fpt_slave_agents[];
