@@ -8,7 +8,8 @@ class fpt_apb_slave_agent extends uvm_agent;
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
     fpt_apb_slave_driver m_apb_slave_driver;
     fpt_apb_slave_sequencer m_apb_slave_sequencer;
-    //Need monitor
+    fpt_apb_slave_monitor m_apb_slave_monitor;
+    uvm_analysis_port #(fpt_apb_slave_seq_item) item_collected_port;
 
     extern function new(string name = "fpt_apb_slave_agent", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);
@@ -19,6 +20,7 @@ endclass
 // Function: new
 function fpt_apb_slave_agent::new(string name = "fpt_apb_slave_agent", uvm_component parent = null);
     super.new(name, parent);
+    item_collected_port = new("item_collected_port", this);
 endfunction
 
 // Function: build_phase
@@ -30,6 +32,7 @@ function void fpt_apb_slave_agent::build_phase(uvm_phase phase);
     m_apb_slave_seq_item    = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
     m_apb_slave_driver      = fpt_apb_slave_driver::type_id::create("m_apb_slave_driver", this);
     m_apb_slave_sequencer   = fpt_apb_slave_sequencer::type_id::create("m_apb_slave_sequencer", this);
+    m_apb_slave_monitor     = fpt_apb_slave_monitor::type_id::create("m_apb_slave_monitor", this);
 endfunction: build_phase	
 
 function void fpt_apb_slave_agent::connect_phase(uvm_phase phase);
@@ -37,6 +40,7 @@ function void fpt_apb_slave_agent::connect_phase(uvm_phase phase);
 	
 	// if(m_cfg.is_active == UVM_ACTIVE) begin
 	m_apb_slave_driver.seq_item_port.connect(m_apb_slave_sequencer.seq_item_export);
+	m_apb_slave_monitor.item_collected_port.connect(item_collected_port);
 	// end	
 	
 endfunction	

@@ -13,7 +13,7 @@ class fpt_apb_slave_seq_item extends uvm_sequence_item;
     bit [(`FPT_APB_DATA_WIDTH/8)-1:0] PSTRB;
 
     // Randomized signals 
-    bit PREADY; 
+    bit PREADY;
     rand bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
     rand slave_error_e PSLVERR;
     rand int unsigned delay;
@@ -63,12 +63,9 @@ function void fpt_apb_slave_seq_item::do_copy(uvm_object rhs);
     super.do_copy(rhs);
 
     PADDR   = rhs_item.PADDR;
-    PSEL    = rhs_item.PSEL;
     PWRITE  = rhs_item.PWRITE;
-    PENABLE = rhs_item.PENABLE;
     PWDATA  = rhs_item.PWDATA;
     PSTRB   = rhs_item.PSTRB;
-    PREADY  = rhs_item.PREADY;
     PRDATA  = rhs_item.PRDATA;
     PSLVERR = rhs_item.PSLVERR;
     delay   = rhs_item.delay;
@@ -94,12 +91,9 @@ function bit fpt_apb_slave_seq_item::do_compare(
 
     return super.do_compare(rhs, comparer) &&
            (PADDR   == rhs_item.PADDR)   &&
-           (PSEL    == rhs_item.PSEL)    &&
            (PWRITE  == rhs_item.PWRITE)  &&
-           (PENABLE == rhs_item.PENABLE) &&
            (PWDATA  == rhs_item.PWDATA)  &&
            (PSTRB   == rhs_item.PSTRB)   &&
-           (PREADY  == rhs_item.PREADY)  &&
            (PRDATA  == rhs_item.PRDATA)  &&
            (PSLVERR == rhs_item.PSLVERR) &&
            (delay   == rhs_item.delay);
