@@ -19,9 +19,6 @@ class fpt_apb_base_test extends uvm_test;
     //-------------------------------------------------------
     extern function new(string name = "fpt_apb_base_test", uvm_component parent = null);
     extern virtual function void build_phase(uvm_phase phase);
-    //extern virtual function void setup_apb_env_config();
-    //extern virtual function void setup_apb_master_agent_config();
-    //extern virtual function void setup_apb_slave_agent_config();
     extern virtual function void end_of_elaboration_phase(uvm_phase phase);
     extern virtual task run_phase(uvm_phase phase);
 
@@ -50,8 +47,12 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     //setup_apb_env_config();
     fpt_sys_config = fpt_apb_sys_config::type_id::create("fpt_sys_config", this);
     fpt_sys_config.fpt_master_numb = 1;
+    fpt_sys_config.fpt_master_priority[0] = 1;
+
     fpt_sys_config.fpt_slave_numb  = 1;
-    
+    fpt_sys_config.fpt_mem_model_base_addr[0] = 32'h0000_0000;
+    fpt_sys_config.fpt_mem_model_addr_range[0] = 32'h0000_FFFF;
+    fpt_sys_config.fpt_mem_model_init_pattern[0] = INCR;
 
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;
