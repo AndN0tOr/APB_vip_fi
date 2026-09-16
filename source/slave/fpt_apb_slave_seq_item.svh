@@ -20,7 +20,9 @@ class fpt_apb_slave_seq_item extends uvm_sequence_item;
 
     // Constraints
     // 1. PREADY: delayed for a number cycles
-    constraint c_pready_delay {soft delay inside {[0:5]};}
+    constraint c_pready_delay {
+        soft delay inside {`FPT_APB_PREADY_DELAY_LOW};
+    }
 
     // 2. PSLVERR: 95% NO_ERROR, 5% ERROR
     constraint c_pslverr {

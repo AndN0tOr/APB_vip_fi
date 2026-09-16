@@ -13,7 +13,9 @@ class fpt_apb_master_seq_item extends uvm_sequence_item;
     rand slave_error_e PSLVERR;
     rand int unsigned delay;
 
-    constraint transfer_delay_c {soft delay inside {[0:5]};}
+    constraint trans_delay {
+        soft delay inside {`FPT_APB_TRANS_DELAY_LOW};
+    }
 
     constraint pstrb_read_pstrb_c {(PWRITE == READ) -> (PSTRB == '0);}
 
