@@ -113,16 +113,41 @@ endtask
 task fpt_apb_master_driver::get_and_drive();
     bit reset_handled;
     bit pready_seen;
+    bit restart_transaction;
 
     forever begin
         // -----------------------------------------------------
-        // APB SETUP PHASE
+        // APB IDLE phase 
         // -----------------------------------------------------
         // Reset handling
         handle_reset(reset_handled);
         if (reset_handled)
             continue;
 
+        // Delay before asserting PSEL.
+        restart_transaction = 1'b0;
+
+        if (req.delay > 0) begin
+            vif.master_drv_cb.PSEL    <= 1'b0;
+            vif.master_drv_cb.PENABLE <= 1'b0;
+
+            repeat (req.delay) begin
+                @(vif.master_drv_cb);
+
+                handle_reset(reset_handled);
+                if (reset_handled) begin
+                    restart_transaction = 1'b1;
+                    break;
+                end
+            end
+
+            if (restart_transaction)
+                continue;
+        end
+
+        // -----------------------------------------------------
+        // APB SETUP phase 
+        // -----------------------------------------------------
         // Drive setup signals
         vif.master_drv_cb.PSEL      <= 1'b1;
         vif.master_drv_cb.PENABLE   <= 1'b0;
