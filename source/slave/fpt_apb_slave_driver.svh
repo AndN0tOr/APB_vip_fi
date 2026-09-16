@@ -53,6 +53,13 @@ task fpt_apb_slave_driver::get_and_drive();
         m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
 		seq_item_port.get_next_item(m_apb_slave_seq_item);
 
+        `uvm_info(
+                "fpt_apb_slave_driver",
+                $sformatf("Slave driver finished transaction #%0d", m_apb_slave_seq_item.delay),
+                UVM_LOW
+        )
+
+
 		// SETUP: PSEL is high and PENABLE is low.
 		do begin
             @(vif.slave_drv_cb);

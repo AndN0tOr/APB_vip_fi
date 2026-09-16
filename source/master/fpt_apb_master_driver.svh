@@ -10,7 +10,7 @@ class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     extern virtual task run_phase(uvm_phase phase);
     extern virtual task reset_handle();
 	extern virtual task get_and_drive();
-    extern virtual task setup_phase();
+    extern virtual task apb_setup_phase();
 	extern virtual task init_signals();
 endclass
 
@@ -26,37 +26,48 @@ function void fpt_apb_master_driver::build_phase(uvm_phase phase);
 endfunction: build_phase	
 
 task fpt_apb_master_driver::run_phase(uvm_phase phase);
-	super.run_phase(phase);
-    forever begin
-        if (!vif.PRESETn) begin
-            init_signals();
-            @(posedge vif.PRESETn);
-            `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
-        end
-        forever begin
-            get_and_drive();
-        end
-        fork
-            begin
-                get_and_drive();
-            end
-            begin
-                @(negedge vif.PRESETn);
-            end
-        join_any
-        disable fork;
+    super.run_phase(phase);
+
+    
+    // Remain idle during reset.
+    //reset_handle();
+    if (!vif.PRESETn) begin
         init_signals();
-        req = null; // Clear local reference safely
+        if (req!= null) begin
+            seq_item_port.item_done();
+            req = null;
+        end
+
+        @(posedge vif.PRESETn);
+        
+        `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
     end
-endtask
-task fpt_apb_master_driver::reset_handle();
+
+
+    // Drive transactions while independently watching reset.
+    get_and_drive();
     init_signals();
-    if (req!= null) begin
+
+    // Do not merely clear an outstanding item handle.
+    if (req != null) begin
         seq_item_port.item_done();
         req = null;
     end
-    @(posedge vif.PRESETn);
+    
+endtask
+task fpt_apb_master_driver::reset_handle();
+    if (!vif.PRESETn) begin
+        init_signals();
+        if (req!= null) begin
+            seq_item_port.item_done();
+            req = null;
+        end
+
+        @(posedge vif.PRESETn);
+        
         `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
+        //continue;
+    end
 endtask
 task fpt_apb_master_driver::init_signals();
 	vif.master_drv_cb.PSEL  <= 1'b0;
@@ -67,7 +78,7 @@ task fpt_apb_master_driver::init_signals();
     vif.master_drv_cb.PWRITE <= 'x;
 endtask
 
-task fpt_apb_master_driver::setup_phase();
+task fpt_apb_master_driver::apb_setup_phase();
     // Control signals
     vif.master_drv_cb.PSEL <= 1'b1;
     vif.master_drv_cb.PENABLE <= 1'b0;
@@ -82,28 +93,70 @@ endtask
 task fpt_apb_master_driver::get_and_drive();
     int unsigned wait_cycles;
 
-    init_signals();
     // Obtain the first transaction.
     seq_item_port.get_next_item(req);
     @(vif.master_drv_cb);
 
     forever begin
         // SETUP PHASE--
-        setup_phase();
+        apb_setup_phase();
+
+        // reset_handle();
+        if (!vif.PRESETn) begin
+            init_signals();
+            if (req!= null) begin
+                seq_item_port.item_done();
+                req = null;
+            end
+            
+
+            @(posedge vif.PRESETn);
+            
+            seq_item_port.get_next_item(req);
+            @(vif.master_drv_cb);
+
+            continue;
+            
+            `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
+        end
+
+        apb_setup_phase();
+
         // ACCESS PHASE
         @(vif.master_drv_cb);
+        
+        if (!vif.PRESETn) begin
+            init_signals();
+            if (req!= null) begin
+                seq_item_port.item_done();
+                req = null;
+            end
+            @(posedge vif.PRESETn);
+            seq_item_port.get_next_item(req);
+            @(vif.master_drv_cb);
+            continue;
+            
+            `uvm_info(get_type_name(), "RESET Released.", UVM_HIGH)
+        end
+
+
         vif.master_drv_cb.PENABLE <= 1'b1;
         wait_cycles = 0;
         forever begin
             @(vif.master_drv_cb);
+
             if (!vif.PRESETn) begin
                 init_signals();
                 seq_item_port.item_done();
+                req = null;
                 return;
             end
+
+            // Move on if PREADY = 1
             if (vif.master_drv_cb.PREADY === 1'b1)
                 break;
 
+            // Else wait for PREADY
             wait_cycles++;
             if (wait_cycles >= 100) begin
                 `uvm_error(
@@ -115,6 +168,7 @@ task fpt_apb_master_driver::get_and_drive();
                 )
                 init_signals();
                 seq_item_port.item_done();
+                req = null;
                 return;
             end
         end
@@ -122,8 +176,8 @@ task fpt_apb_master_driver::get_and_drive();
         // -----------------------------------------------------
         // COMPLETION
         // -----------------------------------------------------
-        req.PSLVERR =
-            slave_error_e'(vif.master_drv_cb.PSLVERR);
+        vif.master_drv_cb.PENABLE <= 1'b0;
+        req.PSLVERR = slave_error_e'(vif.master_drv_cb.PSLVERR);
 
         if (req.PWRITE == READ)
             req.PRDATA = vif.master_drv_cb.PRDATA;
@@ -141,6 +195,7 @@ task fpt_apb_master_driver::get_and_drive();
             // Wait until another transaction becomes available.
             seq_item_port.get_next_item(req);
             @(vif.master_drv_cb);
+
         end
 
         // If try_next_item returned an item, the loop immediately
