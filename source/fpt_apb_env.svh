@@ -24,6 +24,8 @@ class fpt_apb_env extends uvm_env;
 	//--------------------------------------------------------------------
 	extern function new(string name = "fpt_apb_env", uvm_component parent= null );
 	extern virtual function void build_phase(uvm_phase phase);	
+    extern function void fpt_apb_malloc_array();
+    extern function void fpt_build_and_config_mem_models();
 endclass
 
 // Function: new
@@ -43,18 +45,17 @@ endfunction: fpt_apb_malloc_array
 function void fpt_apb_env::fpt_build_and_config_mem_models();
 	foreach (fpt_master_agents[i]) begin
 		fpt_master_agents[i] = fpt_apb_master_agent::type_id::create($sformatf("master_agent_%0d", i), this);
-		fpt_master_agents[i].fpt_master_priority = fpt_sys_config.fpt_master_priority[i];
+		fpt_master_agents[i].fpt_apb_master_i_priority = fpt_sys_config.fpt_master_priority[i];
 	end
     foreach (fpt_mem_model[i]) begin
         // Instantiate
         fpt_mem_model[i] = fpt_apb_mem_model_t::type_id::create($sformatf("mem_model_%0d", i), this);
-		fpt_mem_model[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
+		fpt_slave_agents[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
 
         // Configure using sys_cfg parameters
         fpt_mem_model[i].fpt_base_addr  = fpt_sys_config.fpt_mem_model_base_addr[i];
         fpt_mem_model[i].fpt_addr_range = fpt_sys_config.fpt_mem_model_addr_range[i];
-        fpt_mem_model[i].fpt_mem_scope  = fpt_sys_config.fpt_mem_model_scope[i];
-		fpt_mem_model[i].fpt_init_pattern = fpt_sys_config.fpt_mem_model_init_pattern[i];
+        fpt_mem_model[i].fpt_mem_init_pattern = fpt_sys_config.fpt_mem_model_init_pattern[i];
     end
 endfunction: fpt_build_and_config_mem_models
 
@@ -63,7 +64,6 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
 	if (!uvm_config_db#(fpt_apb_sys_config)::get(this, "", "fpt_apb_sys_config", fpt_sys_config)) begin
         `uvm_fatal(get_full_name(), "Cannot get fpt_apb_sys_config from config_db!")
     end
-	
 	fpt_apb_malloc_array();
 	fpt_build_and_config_mem_models();
 	
