@@ -19,6 +19,7 @@ class fpt_apb_mem_model_t extends uvm_object;
     int unsigned fpt_base_addr;
     int unsigned fpt_addr_range; 
     
+    FPT_MEMORY_INIT_PATTERN_E fpt_mem_init_pattern;
     // Associative array: Uses addresses as keys. Prevents out-of-memory errors
     // when using high base addresses, while naturally accepting any address written to it.
     byte fpt_mem_array[int unsigned];

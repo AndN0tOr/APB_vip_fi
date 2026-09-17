@@ -50,6 +50,7 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     fpt_sys_config.fpt_master_priority[0] = 1;
 
     fpt_sys_config.fpt_slave_numb  = 1;
+    // can init an array, this is for just one slave
     fpt_sys_config.fpt_mem_model_base_addr[0] = 32'h0000_0000;
     fpt_sys_config.fpt_mem_model_addr_range[0] = 32'h0000_FFFF;
     fpt_sys_config.fpt_mem_model_init_pattern[0] = INCR;
@@ -60,8 +61,8 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     fpt_sys_config.fpt_delay_pready_max = 0;
     fpt_sys_config.fpt_delay_transfer_min = 0; 
     fpt_sys_config.fpt_delay_transfer_max = 0;
+
     fpt_sys_config.fpt_pready_timeout = 1000;
-    fpt_sys_config.fpt_penable_timeout = 1000;
 
     uvm_config_db#(fpt_apb_sys_config)::set(this, "*", "fpt_apb_sys_config", fpt_sys_config);
     apb_env_h = fpt_apb_env::type_id::create("fpt_apb_env",this);
