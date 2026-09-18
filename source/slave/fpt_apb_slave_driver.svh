@@ -49,23 +49,59 @@ task fpt_apb_slave_driver::get_and_drive();
     init_signals();
 
 	forever begin
+        // Initial reset handling: do not consume a response item during the initial reset.
+        if (!vif.PRESETn) begin
+            init_signals();
+            @(posedge vif.PRESETn);
+        end
+
         // Keep one response item ready for the next observed transfer.
         m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
 		seq_item_port.get_next_item(m_apb_slave_seq_item);
 
-		// SETUP: PSEL is high and PENABLE is low.
+        `uvm_info(
+                "fpt_apb_slave_driver",
+                $sformatf("Slave driver finished transaction #%0d", m_apb_slave_seq_item.delay),
+                UVM_LOW
+        )
+
+
+        // -----------------------------------------------------
+        // APB SETUP phase 
+        // -----------------------------------------------------
+        // SETUP: PSEL is high and PENABLE is low. If reset is
+        // asserted after prefetching this item, drop it so the next
+        // master request uses the next slave response item.
+        aborted = 1'b0;
 		do begin
             @(vif.slave_drv_cb);
             if (!vif.PRESETn) begin
-                init_signals();
+                aborted = 1'b1;
+                break;
             end
-        end while (!vif.PRESETn ||
-                   vif.slave_drv_cb.PSEL !== 1'b1 ||
+        end while (vif.slave_drv_cb.PSEL !== 1'b1 ||
                    vif.slave_drv_cb.PENABLE !== 1'b0);
 
+        if (aborted) begin
+            init_signals();
+            `uvm_info(
+                "fpt_apb_slave_driver",
+                $sformatf(
+                    "Dropping slave response with delay=%0d during reset",
+                    m_apb_slave_seq_item.delay
+                ),
+                UVM_MEDIUM
+            )
+            seq_item_port.item_done();
+            m_apb_slave_seq_item = null;
+            continue;
+        end
+
+        // -----------------------------------------------------
+        // APB ACCESS phase
+        // -----------------------------------------------------
         // Count wait states from SETUP. For delay=0, drive the response
         // now so it is valid during the very first ACCESS cycle.
-        aborted = 1'b0;
         for (int unsigned wait_cycle = 0;
             wait_cycle < m_apb_slave_seq_item.delay;
             wait_cycle++) 

@@ -47,11 +47,11 @@ module fpt_apb_tb_top;
         // Apply a second reset pulse only in the reset test.
         if ($value$plusargs("UVM_TESTNAME=%s", selected_test) &&
             selected_test == "fpt_apb_rst_test") begin
-            // repeat (5) @(posedge PCLK);
-            // PRESETn <= 1'b0;
+            repeat (4) @(posedge PCLK);
+            PRESETn <= 1'b0;
 
-            // repeat (2) @(posedge PCLK);
-            // PRESETn <= 1'b1;
+            repeat (2) @(posedge PCLK);
+            PRESETn <= 1'b1;
         end
     end
     // initial begin 

@@ -16,13 +16,8 @@ class fpt_apb_mem_model_t extends uvm_object;
     `uvm_object_utils(fpt_apb_mem_model_t)
 
     // Memory model parameters
-    int unsigned fpt_base_addr;
-    int unsigned fpt_addr_range; 
-    
-    FPT_MEMORY_INIT_PATTERN_E fpt_mem_init_pattern;
-    // Associative array: Uses addresses as keys. Prevents out-of-memory errors
-    // when using high base addresses, while naturally accepting any address written to it.
-    byte fpt_mem_array[int unsigned];
+    int unsigned fpt_mem_size; // Size of the memory in bytes
+    byte fpt_mem_array[];      // Memory array to hold data
 
     extern function new(string name = "fpt_apb_mem_model_t", int unsigned fpt_base_addr = 32'h0, int unsigned fpt_addr_range = 32'hFFFF);
     

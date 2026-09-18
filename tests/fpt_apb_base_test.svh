@@ -50,10 +50,7 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     fpt_sys_config.fpt_master_priority[0] = 1;
 
     fpt_sys_config.fpt_slave_numb  = 1;
-    // can init an array, this is for just one slave
-    fpt_sys_config.fpt_mem_model_base_addr[0] = 32'h0000_0000;
-    fpt_sys_config.fpt_mem_model_addr_range[0] = 32'h0000_FFFF;
-    fpt_sys_config.fpt_mem_model_init_pattern[0] = INCR;
+    
 
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;

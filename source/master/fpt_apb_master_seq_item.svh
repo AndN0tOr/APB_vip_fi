@@ -13,6 +13,8 @@ class fpt_apb_master_seq_item extends uvm_sequence_item;
     rand slave_error_e PSLVERR;
     rand int unsigned delay;
 
+    constraint transfer_delay_c {soft delay inside {[0:5]};}
+
     constraint pstrb_read_pstrb_c {(PWRITE == READ) -> (PSTRB == '0);}
 
     extern function new(string name = "fpt_apb_master_seq_item");
