@@ -17,9 +17,15 @@ class fpt_apb_mem_model_t extends uvm_object;
 
     // Memory model parameters
     int unsigned fpt_mem_size; // Size of the memory in bytes
-    byte fpt_mem_array[];      // Memory array to hold data
+    byte fpt_mem_array[int unsigned];      // Memory array to hold data
+    int unsigned fpt_base_addr;
+    int unsigned fpt_addr_range;
+    FPT_MEMORY_INIT_PATTERN_E fpt_mem_init_pattern;
 
-    extern function new(string name = "fpt_apb_mem_model_t", int unsigned fpt_base_addr = 32'h0, int unsigned fpt_addr_range = 32'hFFFF);
+
+    extern function new(string name = "fpt_apb_mem_model_t", 
+                int unsigned fpt_base_addr = 32'h0, 
+                int unsigned fpt_addr_range = 32'hFFFF);
     
     // UVM Core Methods
     extern virtual function void do_print(uvm_printer printer);
@@ -86,7 +92,7 @@ function void fpt_apb_mem_model_t::fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E 
     int unsigned current_addr;
     
     // Initialize exactly 'fpt_addr_range' bytes, starting from 'fpt_base_addr'
-    for (int i = 0; i < fpt_addr_range; i++) begin
+    for (int i = 0; i < this.fpt_addr_range; i++) begin
         current_addr = fpt_base_addr + i;
         case(fpt_pattern)
             ALL0: fpt_mem_array[current_addr] = 8'h00;
