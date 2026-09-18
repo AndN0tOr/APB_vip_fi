@@ -54,12 +54,12 @@ module fpt_apb_tb_top;
             // PRESETn <= 1'b1;
         end
     end
-    initial begin
-        $fsdbDumpfile("novas.fsdb");
-        $fsdbDumpvars(0, fpt_apb_tb_top);
-        $fsdbDumpMDA();
-        $display("[TB_TOP] FSDB dumping enabled!"); // Thêm log để xác nhận block này đã chạy
-    end
+    // initial begin 
+    //     $fsdbDumpfile("novas.fsdb");
+    //     $fsdbDumpvars(0, fpt_apb_tb_top);            // Toggle this block on if run on VCS
+    //     $fsdbDumpMDA();
+    //     $display("[TB_TOP] FSDB dumping enabled!"); // Thêm log để xác nhận block này đã chạy
+    // end
     initial begin
         string selected_test;
         uvm_config_db#(fpt_apb_vif_t)::set(
