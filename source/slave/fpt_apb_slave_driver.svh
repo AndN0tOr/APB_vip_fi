@@ -135,23 +135,21 @@ task fpt_apb_slave_driver::get_and_drive();
         // Read from memory model
         if (vif.slave_drv_cb.PWRITE === 1'b0) begin
             fpt_mem_model.fpt_read_32(vif.slave_drv_cb.PADDR, read_bytes);
-            m_apb_slave_seq_item.PRDATA = {read_bytes[3], read_bytes[2],
-                        read_bytes[1], read_bytes[0]};
+            m_apb_slave_seq_item.PRDATA = {
+                read_bytes[3], 
+                read_bytes[2],
+                read_bytes[1], 
+                read_bytes[0]
+            };
+            vif.slave_drv_cb.PRDATA <= m_apb_slave_seq_item.PRDATA;
+
         end else 
             vif.slave_drv_cb.PRDATA <= '0;
 
-        for (int i = 0; i < 4; i++) begin
+        foreach (write_bytes[i])
             write_bytes[i] = vif.slave_drv_cb.PWDATA[i*8 +: 8];
-        end
         
-        // Write to memory model
-        if (vif.slave_drv_cb.PWRITE && !vif.slave_drv_cb.PSLVERR) begin
-            fpt_mem_model.fpt_write(
-                vif.slave_drv_cb.PADDR,
-                write_bytes,
-                vif.slave_drv_cb.PSTRB
-            );
-        end
+        
         // This edge is the completion edge when PREADY is high.
         @(vif.slave_drv_cb);
         if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1)
@@ -161,11 +159,20 @@ task fpt_apb_slave_driver::get_and_drive();
             aborted = 1'b1;
         end
 
+          // Write to memory model
+        if (vif.slave_drv_cb.PWRITE && !vif.slave_drv_cb.PSLVERR) begin
+            fpt_mem_model.fpt_write(
+                vif.slave_drv_cb.PADDR,
+                write_bytes,
+                vif.slave_drv_cb.PSTRB
+            );
+        end
+
         init_signals();
         seq_item_port.item_done();
         if (!aborted)
             `uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW)
-	end				
+	end	
 endtask
 
 `endif // FPT_APB_SLAVE_DRIVER_SVH

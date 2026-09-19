@@ -114,10 +114,10 @@ endfunction: fpt_write
 
 function void fpt_apb_mem_model_t::fpt_write_32(int unsigned fpt_addr, byte data [3:0]);
     // No bounds checking. Associative array simply creates keys if they don't exist.
-    fpt_mem_array[fpt_addr]     = data[3];
-    fpt_mem_array[fpt_addr + 1] = data[2];
-    fpt_mem_array[fpt_addr + 2] = data[1];
-    fpt_mem_array[fpt_addr + 3] = data[0];
+    fpt_mem_array[fpt_addr]     = data[0];
+    fpt_mem_array[fpt_addr + 1] = data[1];
+    fpt_mem_array[fpt_addr + 2] = data[2];
+    fpt_mem_array[fpt_addr + 3] = data[3];
 endfunction: fpt_write_32
 
 function void fpt_apb_mem_model_t::fpt_write_8(int unsigned fpt_addr, byte data);
@@ -127,10 +127,10 @@ endfunction: fpt_write_8
 function void fpt_apb_mem_model_t::fpt_read_32(int unsigned fpt_addr, output byte data [3:0]);
     // Use .exists() to avoid simulator warnings when reading uninitialized memory.
     // If the master reads an address that was never written/initialized, it safely returns 8'h00.
-    data[3] = fpt_mem_array.exists(fpt_addr)     ? fpt_mem_array[fpt_addr]     : 8'h00;
-    data[2] = fpt_mem_array.exists(fpt_addr + 1) ? fpt_mem_array[fpt_addr + 1] : 8'h00;
-    data[1] = fpt_mem_array.exists(fpt_addr + 2) ? fpt_mem_array[fpt_addr + 2] : 8'h00;
-    data[0] = fpt_mem_array.exists(fpt_addr + 3) ? fpt_mem_array[fpt_addr + 3] : 8'h00;
+    data[0] = fpt_mem_array.exists(fpt_addr)     ? fpt_mem_array[fpt_addr]     : 8'h00;
+    data[1] = fpt_mem_array.exists(fpt_addr + 1) ? fpt_mem_array[fpt_addr + 1] : 8'h00;
+    data[2] = fpt_mem_array.exists(fpt_addr + 2) ? fpt_mem_array[fpt_addr + 2] : 8'h00;
+    data[3] = fpt_mem_array.exists(fpt_addr + 3) ? fpt_mem_array[fpt_addr + 3] : 8'h00;
 endfunction: fpt_read_32
 
 function void fpt_apb_mem_model_t::fpt_read_8(int unsigned fpt_addr, output byte data);

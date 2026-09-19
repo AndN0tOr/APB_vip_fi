@@ -18,6 +18,7 @@ import fpt_apb_master_pkg::*;
 `include "../source/fpt_apb_env.svh"
 `include "fpt_apb_base_test.svh"
 `include "fpt_apb_rst_test.sv"
+`include "fpt_apb_read_write_test.sv"
 `include "fpt_apb_sys_config.svh"
 
 module fpt_apb_tb_top;

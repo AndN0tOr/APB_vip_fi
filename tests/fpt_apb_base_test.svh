@@ -47,10 +47,16 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     //setup_apb_env_config();
     fpt_sys_config = fpt_apb_sys_config::type_id::create("fpt_sys_config", this);
     fpt_sys_config.fpt_master_numb = 1;
+    fpt_sys_config.fpt_master_priority = new[fpt_sys_config.fpt_master_numb];
     fpt_sys_config.fpt_master_priority[0] = 1;
 
     fpt_sys_config.fpt_slave_numb  = 1;
-    
+    fpt_sys_config.fpt_mem_model_base_addr = new[fpt_sys_config.fpt_slave_numb];
+    fpt_sys_config.fpt_mem_model_addr_range = new[fpt_sys_config.fpt_slave_numb];
+    fpt_sys_config.fpt_mem_model_init_pattern = new[fpt_sys_config.fpt_slave_numb];
+    fpt_sys_config.fpt_mem_model_base_addr[0] = 'h0;
+    fpt_sys_config.fpt_mem_model_addr_range[0] = 'h1000;
+    fpt_sys_config.fpt_mem_model_init_pattern[0] = ALL0;
 
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;
