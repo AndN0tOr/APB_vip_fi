@@ -160,7 +160,7 @@ task fpt_apb_slave_driver::get_and_drive();
         end
 
           // Write to memory model
-        if (vif.slave_drv_cb.PWRITE && !vif.slave_drv_cb.PSLVERR) begin
+        if (vif.slave_drv_cb.PWRITE && !m_apb_slave_seq_item.PSLVERR) begin
             fpt_mem_model.fpt_write(
                 vif.slave_drv_cb.PADDR,
                 write_bytes,
