@@ -1,19 +1,12 @@
 `ifndef FPT_APB_ENV_SVH
 `define FPT_APB_ENV_SVH
 
-// import uvm_pkg::*;
-// `include "uvm_macros.svh" 
-
-`include "../tests/fpt_apb_sys_config.svh"
-`include "../tests/fpt_apb_mem_model_t.svh"
-
 class fpt_apb_env extends uvm_env;
 	`uvm_component_utils(fpt_apb_env)
 	
 	//--------------------------------------------------------------------
 	//	Component Members
-	//--------------------------------------------------------------------	
-	fpt_apb_mem_model_t fpt_mem_model[];
+	//--------------------------------------------------------------------	;
 	fpt_apb_sys_config fpt_sys_config;
 	fpt_apb_master_agent fpt_master_agents[];
 	fpt_apb_slave_agent fpt_slave_agents[];
@@ -34,7 +27,6 @@ function fpt_apb_env::new(string name = "fpt_apb_env", uvm_component parent = nu
 	super.new(name, parent);
 endfunction
 function void fpt_apb_env::fpt_apb_malloc_array();
-	fpt_mem_model = new[fpt_sys_config.fpt_slave_numb];
 	fpt_master_agents = new[fpt_sys_config.fpt_master_numb];
 	fpt_slave_agents = new[fpt_sys_config.fpt_slave_numb];
 endfunction: fpt_apb_malloc_array
@@ -44,15 +36,15 @@ function void fpt_apb_env::fpt_build_and_config_mem_models();
 		fpt_master_agents[i] = fpt_apb_master_agent::type_id::create($sformatf("master_agent_%0d", i), this);
 		fpt_master_agents[i].fpt_apb_master_i_priority = fpt_sys_config.fpt_master_priority[i];
 	end
-    foreach (fpt_mem_model[i]) begin
-        // Instantiate
-        fpt_mem_model[i] = fpt_apb_mem_model_t::type_id::create($sformatf("mem_model_%0d", i), this);
+    foreach (fpt_slave_agents[i]) begin
+        // Instantiate instance from the apb env
 		fpt_slave_agents[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
+		fpt_slave_agents[i].fpt_mem_model = fpt_apb_mem_model_t::type_id::create($sformatf("slave_mem_model_%0d", i), this);
 
-        // Configure using sys_cfg parameters
-        fpt_mem_model[i].fpt_base_addr  = fpt_sys_config.fpt_mem_model_base_addr[i];
-        fpt_mem_model[i].fpt_addr_range = fpt_sys_config.fpt_mem_model_addr_range[i];
-        fpt_mem_model[i].fpt_mem_init_pattern = fpt_sys_config.fpt_mem_model_init_pattern[i];
+		fpt_slave_agents[i].fpt_mem_model.fpt_base_addr  = fpt_sys_config.fpt_mem_model_base_addr[i];
+		fpt_slave_agents[i].fpt_mem_model.fpt_addr_range = fpt_sys_config.fpt_mem_model_addr_range[i];
+		fpt_slave_agents[i].fpt_mem_model.fpt_mem_init_pattern = fpt_sys_config.fpt_mem_model_init_pattern[i];
+		fpt_slave_agents[i].fpt_mem_model.fpt_init_mem_model();
     end
 endfunction: fpt_build_and_config_mem_models
 
