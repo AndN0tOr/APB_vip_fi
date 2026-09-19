@@ -6,15 +6,12 @@ class fpt_apb_slave_seq_item extends uvm_sequence_item;
 
     // Request signals from APB master/ DUT
     bit [`FPT_APB_ADDR_WIDTH-1:0] PADDR;
-    bit PSEL;
     tx_type_e PWRITE;
-    bit PENABLE;
     bit [`FPT_APB_DATA_WIDTH-1:0] PWDATA;
     bit [(`FPT_APB_DATA_WIDTH/8)-1:0] PSTRB;
 
     // Randomized signals 
-    bit PREADY;
-    rand bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
+    bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA; // Read from memory model
     rand slave_error_e PSLVERR;
     rand int unsigned delay;
 

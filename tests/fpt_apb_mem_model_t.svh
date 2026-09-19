@@ -36,7 +36,7 @@ class fpt_apb_mem_model_t extends uvm_object;
     extern function void fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E fpt_pattern = ALL0);
     
     // Write / Read functions (Bounds checks removed as requested)
-    extern function void fpt_write (int unsigned fpt_addr, byte data [3:0], bit fpt_mem_pstrobe [3:0]);
+    extern function void fpt_write (int unsigned fpt_addr, byte data [3:0], bit [3:0] fpt_mem_pstrobe );
     extern function void fpt_write_32(int unsigned fpt_addr, byte data [3:0]);
     extern function void fpt_write_8(int unsigned fpt_addr, byte data);
     
@@ -104,7 +104,7 @@ function void fpt_apb_mem_model_t::fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E 
     end
 endfunction: fpt_init_mem_model
 
-function void fpt_apb_mem_model_t::fpt_write(int unsigned fpt_addr, byte data [3:0], bit fpt_mem_pstrobe [3:0]);
+function void fpt_apb_mem_model_t::fpt_write(int unsigned fpt_addr, byte data [3:0], bit [3:0] fpt_mem_pstrobe);
     for (int i = 0; i < 4; i++) begin
         if (fpt_mem_pstrobe[i]) begin
             fpt_write_8(fpt_addr + i, data[i]);
