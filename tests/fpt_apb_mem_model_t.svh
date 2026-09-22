@@ -33,7 +33,7 @@ class fpt_apb_mem_model_t extends uvm_object;
     extern virtual function bit  do_compare(uvm_object rhs, uvm_comparer comparer);
 
     // Initialization
-    extern function void fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E fpt_pattern = ALL0);
+    extern function void fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E fpt_pattern);
     
     // Write / Read functions (Bounds checks removed as requested)
     extern function void fpt_write (int unsigned fpt_addr, byte data [3:0], bit [3:0] fpt_mem_pstrobe );

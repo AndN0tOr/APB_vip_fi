@@ -35,16 +35,17 @@ function void fpt_apb_env::fpt_build_and_config_mem_models();
 	foreach (fpt_master_agents[i]) begin
 		fpt_master_agents[i] = fpt_apb_master_agent::type_id::create($sformatf("master_agent_%0d", i), this);
 		fpt_master_agents[i].fpt_apb_master_i_priority = fpt_sys_config.fpt_master_priority[i];
+		fpt_master_agents[i].fpt_pready_timeout = fpt_sys_config.fpt_pready_timeout[i];
 	end
     foreach (fpt_slave_agents[i]) begin
         // Instantiate instance from the apb env
 		fpt_slave_agents[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
-		fpt_slave_agents[i].fpt_mem_model = fpt_apb_mem_model_t::type_id::create($sformatf("slave_mem_model_%0d", i), this);
+		fpt_slave_agents[i].fpt_mem_model = fpt_apb_mem_model_t::type_id::create($sformatf("slave_mem_model_%0d", i));
 
 		fpt_slave_agents[i].fpt_mem_model.fpt_base_addr  = fpt_sys_config.fpt_mem_model_base_addr[i];
 		fpt_slave_agents[i].fpt_mem_model.fpt_addr_range = fpt_sys_config.fpt_mem_model_addr_range[i];
 		fpt_slave_agents[i].fpt_mem_model.fpt_mem_init_pattern = fpt_sys_config.fpt_mem_model_init_pattern[i];
-		fpt_slave_agents[i].fpt_mem_model.fpt_init_mem_model();
+		fpt_slave_agents[i].fpt_mem_model.fpt_init_mem_model(FPT_MEMORY_INIT_PATTERN_E'(fpt_sys_config.fpt_mem_model_init_pattern[i]));
     end
 endfunction: fpt_build_and_config_mem_models
 

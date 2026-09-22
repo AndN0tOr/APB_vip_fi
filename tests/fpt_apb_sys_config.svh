@@ -17,13 +17,7 @@ class fpt_apb_sys_config extends uvm_object;
 
     FPT_MEMORY_INIT_PATTERN_E fpt_mem_model_init_pattern[];
 
-    int unsigned fpt_delay_pready_min;
-    int unsigned fpt_delay_pready_max;
-
-    int unsigned fpt_delay_transfer_min;
-    int unsigned fpt_delay_transfer_max;
-
-    int unsigned fpt_pready_timeout;
+    int unsigned fpt_pready_timeout[];
 
     extern function new(string name = "fpt_apb_sys_config");
 

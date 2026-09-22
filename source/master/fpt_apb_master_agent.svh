@@ -10,6 +10,7 @@ class fpt_apb_master_agent extends uvm_agent;
     fpt_apb_master_sequencer m_apb_master_sequencer;
 
     int unsigned fpt_apb_master_i_priority;
+    int unsigned fpt_pready_timeout;
     //Need monitor
 
     extern function new(string name = "fpt_apb_master_agent", uvm_component parent = null);
