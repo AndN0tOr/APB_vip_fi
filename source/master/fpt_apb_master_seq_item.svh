@@ -9,8 +9,8 @@ class fpt_apb_master_seq_item extends uvm_sequence_item;
     rand bit [`FPT_APB_DATA_WIDTH-1:0]PWDATA;
     rand bit [(`FPT_APB_DATA_WIDTH/8)-1:0]PSTRB; 
 
-    rand bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
-    rand slave_error_e PSLVERR;
+    bit [`FPT_APB_DATA_WIDTH-1:0] PRDATA;
+    slave_error_e PSLVERR;
     rand int unsigned delay;
 
     constraint trans_delay {

@@ -16,6 +16,7 @@ package fpt_apb_master_pkg;
     `include "fpt_apb_master_driver.svh"
     `include "fpt_apb_master_seq.svh"
     `include "fpt_apb_master_sequencer.svh"
+    `include "fpt_apb_master_monitor.svh"
     `include "fpt_apb_master_agent.svh"
 endpackage
 

@@ -1,8 +1,6 @@
 `ifndef FPT_APB_SLAVE_AGENT_SVH
 `define FPT_APB_SLAVE_AGENT_SVH
 
-`include "../../tests/fpt_apb_sys_config.svh"
-
 class fpt_apb_slave_agent extends uvm_agent;
     `uvm_component_utils(fpt_apb_slave_agent)
 
