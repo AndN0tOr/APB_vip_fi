@@ -11,8 +11,9 @@ class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
     extern function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);
 	extern virtual task run_phase(uvm_phase phase);
-	extern virtual task get_and_drive();
-	extern virtual task init_signals();
+    extern virtual task drive_one_response(output bit transaction_completed);
+    extern virtual task reset_detect(ref bit reset_seen);
+    extern virtual task init_signals();
 endclass
 
 // Function: new
@@ -30,9 +31,56 @@ endfunction: build_phase
 
 // Task: run_phase
 task fpt_apb_slave_driver::run_phase(uvm_phase phase);
+    bit reset_seen;
+    bit transaction_completed;
+
 	super.run_phase(phase);
 
-    get_and_drive();
+    init_signals();
+    forever begin
+        // Do not consume a response during initial reset.
+        wait (vif.PRESETn === 1'b1);
+
+         // get_next_item supplies the sequence's response-policy item.
+        seq_item_port.get_next_item(m_apb_slave_seq_item);
+
+        reset_seen            = 1'b0;
+        transaction_completed = 1'b0;
+
+        fork: TRANSFER_OR_RESET
+            drive_one_response(transaction_completed);
+            reset_detect(reset_seen);
+        join_any
+        disable TRANSFER_OR_RESET;
+
+        if (reset_seen || vif.PRESETn !== 1'b1) begin
+            `uvm_info(
+                get_type_name(),
+                $sformatf(
+                    "Dropping slave response with delay=%0d because of reset",
+                    m_apb_slave_seq_item.delay
+                ),
+                UVM_MEDIUM
+            )
+        end
+
+        else if (!transaction_completed) begin
+            `uvm_error("APB_SLAVE", "Slave response did not complete")
+        end
+
+        else begin
+            `uvm_info(
+                get_type_name(),
+                "Slave response completed",
+                UVM_LOW
+            )
+        end
+
+        // Parent owns cleanup and sequencer handshaking.
+        init_signals();
+        seq_item_port.item_done();
+        m_apb_slave_seq_item = null;
+    end
 endtask
 
 // Task: init_signals
@@ -43,136 +91,111 @@ task fpt_apb_slave_driver::init_signals();
     vif.slave_drv_cb.PSLVERR <= 1'b0;	
 endtask		
 
-// Task: get_and_drive
+// Task: reset_detect
 // Definition:	this task call drive signals.
-task fpt_apb_slave_driver::get_and_drive();
-    bit aborted;
-    byte read_bytes [3:0];
+task fpt_apb_slave_driver::reset_detect(ref bit reset_seen);
+    wait (vif.PRESETn === 1'b0);
+    reset_seen = 1'b1;
+endtask
+
+// Task: drive_one_response
+// Definition:	this task returns one response transaction
+task fpt_apb_slave_driver::drive_one_response(
+    output bit transaction_completed
+);
+    byte read_bytes  [3:0];
     byte write_bytes [3:0];
-    init_signals();
 
-	forever begin
-        // Initial reset handling: do not consume a response item during the initial reset.
-        if (!vif.PRESETn) begin
-            init_signals();
-            @(posedge vif.PRESETn);
-        end
+    transaction_completed = 1'b0;
+    
+    // ---------------------------------------------------------
+    // Wait for SETUP
+    // ---------------------------------------------------------
+    do @(vif.slave_drv_cb);
+    while (
+        vif.slave_drv_cb.PSEL    !== 1'b1 ||
+        vif.slave_drv_cb.PENABLE !== 1'b0
+    );
 
-        // Keep one response item ready for the next observed transfer.
-        m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item", this);
-		seq_item_port.get_next_item(m_apb_slave_seq_item);
+    // Capture the request during SETUP.
+    m_apb_slave_seq_item.PADDR = vif.slave_drv_cb.PADDR;
+    m_apb_slave_seq_item.PWRITE = tx_type_e'(vif.slave_drv_cb.PWRITE);
+    m_apb_slave_seq_item.PWDATA = vif.slave_drv_cb.PWDATA;
+    m_apb_slave_seq_item.PSTRB = vif.slave_drv_cb.PSTRB;
 
-        `uvm_info(
-                "fpt_apb_slave_driver",
-                $sformatf("Slave driver finished transaction #%0d", m_apb_slave_seq_item.delay),
-                UVM_LOW
-        )
+    // ---------------------------------------------------------
+    // ACCESS wait states
+    // ---------------------------------------------------------
+    repeat (m_apb_slave_seq_item.delay) begin
+        @(vif.slave_drv_cb);
 
-
-        // -----------------------------------------------------
-        // APB SETUP phase 
-        // -----------------------------------------------------
-        // SETUP: PSEL is high and PENABLE is low. If reset is
-        // asserted after prefetching this item, drop it so the next
-        // master request uses the next slave response item.
-        aborted = 1'b0;
-		do begin
-            @(vif.slave_drv_cb);
-            if (!vif.PRESETn) begin
-                aborted = 1'b1;
-                break;
-            end
-        end while (vif.slave_drv_cb.PSEL !== 1'b1 ||
-                   vif.slave_drv_cb.PENABLE !== 1'b0);
-
-        if (aborted) begin
-            init_signals();
-            `uvm_info(
-                "fpt_apb_slave_driver",
-                $sformatf(
-                    "Dropping slave response with delay=%0d during reset",
-                    m_apb_slave_seq_item.delay
-                ),
-                UVM_MEDIUM
+        if (vif.slave_drv_cb.PSEL    !== 1'b1 ||
+            vif.slave_drv_cb.PENABLE !== 1'b1) begin
+            `uvm_error(
+                "APB_SETUP",
+                "SETUP did not transition to or remain in ACCESS"
             )
-            seq_item_port.item_done();
-            m_apb_slave_seq_item = null;
-            continue;
+            return;
         end
+    end
 
-        // -----------------------------------------------------
-        // APB ACCESS phase
-        // -----------------------------------------------------
-        // Count wait states from SETUP. For delay=0, drive the response
-        // now so it is valid during the very first ACCESS cycle.
-        for (int unsigned wait_cycle = 0;
-            wait_cycle < m_apb_slave_seq_item.delay;
-            wait_cycle++) 
+    // ---------------------------------------------------------
+    // Prepare the response
+    // ---------------------------------------------------------
+    vif.slave_drv_cb.PREADY <= 1'b1;
+    vif.slave_drv_cb.PSLVERR <=
+        m_apb_slave_seq_item.PSLVERR;
 
-            begin
-            @(vif.slave_drv_cb);
-            if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1) begin
-                aborted = 1'b1;
-                break;
-            end
-            if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
-                `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
-                aborted = 1'b1;
-                break;
-            end
-        end
+    if (m_apb_slave_seq_item.PWRITE == READ) begin
+        fpt_mem_model.fpt_read_32(
+            m_apb_slave_seq_item.PADDR,
+            read_bytes
+        );
 
-        if (aborted) begin
-            init_signals();
-            seq_item_port.item_done();
-            continue;
-        end
+        m_apb_slave_seq_item.PRDATA = {
+            read_bytes[3],
+            read_bytes[2],
+            read_bytes[1],
+            read_bytes[0]
+        };
 
-        // The master samples these outputs at the next rising edge.
-        vif.slave_drv_cb.PREADY <= 1'b1;
-        vif.slave_drv_cb.PSLVERR <= m_apb_slave_seq_item.PSLVERR;
+        vif.slave_drv_cb.PRDATA <=
+            m_apb_slave_seq_item.PRDATA;
+    end
+    else begin
+        vif.slave_drv_cb.PRDATA <= '0;
+    end
 
-        // Read from memory model
-        if (vif.slave_drv_cb.PWRITE === 1'b0) begin
-            fpt_mem_model.fpt_read_32(vif.slave_drv_cb.PADDR, read_bytes);
-            m_apb_slave_seq_item.PRDATA = {
-                read_bytes[3], 
-                read_bytes[2],
-                read_bytes[1], 
-                read_bytes[0]
-            };
-            vif.slave_drv_cb.PRDATA <= m_apb_slave_seq_item.PRDATA;
+    // ---------------------------------------------------------
+    // Completion edge
+    // ---------------------------------------------------------
+    @(vif.slave_drv_cb);
 
-        end else 
-            vif.slave_drv_cb.PRDATA <= '0;
+    if (vif.slave_drv_cb.PSEL    !== 1'b1 ||
+        vif.slave_drv_cb.PENABLE !== 1'b1) begin
+        `uvm_error(
+            "APB_ACCESS",
+            "Transfer did not complete in ACCESS"
+        )
+        return;
+    end
+
+    // Commit a successful write only after completion.
+    if (m_apb_slave_seq_item.PWRITE == WRITE &&
+        m_apb_slave_seq_item.PSLVERR == NO_ERROR) begin
 
         foreach (write_bytes[i])
-            write_bytes[i] = vif.slave_drv_cb.PWDATA[i*8 +: 8];
-        
-        
-        // This edge is the completion edge when PREADY is high.
-        @(vif.slave_drv_cb);
-        if (!vif.PRESETn || vif.slave_drv_cb.PSEL !== 1'b1)
-            aborted = 1'b1;
-        else if (vif.slave_drv_cb.PENABLE !== 1'b1) begin
-            `uvm_error("APB_SETUP", "PENABLE did not assert after SETUP")
-            aborted = 1'b1;
-        end
+            write_bytes[i] =
+                m_apb_slave_seq_item.PWDATA[i*8 +: 8];
 
-          // Write to memory model
-        if (vif.slave_drv_cb.PWRITE && !m_apb_slave_seq_item.PSLVERR) begin
-            fpt_mem_model.fpt_write(
-                vif.slave_drv_cb.PADDR,
-                write_bytes,
-                vif.slave_drv_cb.PSTRB
-            );
-        end
+        fpt_mem_model.fpt_write(
+            m_apb_slave_seq_item.PADDR,
+            write_bytes,
+            m_apb_slave_seq_item.PSTRB
+        );
+    end
 
-        init_signals();
-        seq_item_port.item_done();
-        if (!aborted)
-            `uvm_info("fpt_apb_slave_driver", "Driver finished", UVM_LOW)
-	end	
+    transaction_completed = 1'b1;
 endtask
 
 `endif // FPT_APB_SLAVE_DRIVER_SVH
