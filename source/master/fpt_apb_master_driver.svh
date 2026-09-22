@@ -148,6 +148,7 @@ task fpt_apb_master_driver::get_and_drive(
     // Align with a clocking-block event first. Assignments below will
     // then be driven at this event's output skew.
      if (!back_to_back) begin
+        vif.master_drv_cb.PSEL    <= 1'b0;
         // Starting from IDLE: align before driving SETUP.
         @(vif.master_drv_cb);
 
