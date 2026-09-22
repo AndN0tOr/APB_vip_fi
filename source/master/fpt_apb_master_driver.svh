@@ -95,9 +95,7 @@ task fpt_apb_master_driver::run_phase(uvm_phase phase);
         seq_item_port.item_done();
 
         // Drives PSEL = 0 when all transactions are completed
-        seq_item_port.try_next_item(req);
-        if (req == null) 
-            vif.master_drv_cb.PSEL  <= 1'b0;
+        vif.master_drv_cb.PSEL    <= 1'b0;
     end
 endtask
 
