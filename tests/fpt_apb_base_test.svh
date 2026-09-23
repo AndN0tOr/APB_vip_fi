@@ -52,18 +52,23 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     fpt_sys_config.fpt_master_priority[0] = 1;
     fpt_sys_config.fpt_pready_timeout[0] = 1000;
 
-    fpt_sys_config.fpt_slave_numb  = 1;
+    // CONFIGURE NUMBER OF SLAVE AND ALLOCATE MEMORY
+    fpt_sys_config.fpt_slave_numb  = 2;
     fpt_sys_config.fpt_mem_model_base_addr = new[fpt_sys_config.fpt_slave_numb];
     fpt_sys_config.fpt_mem_model_addr_range = new[fpt_sys_config.fpt_slave_numb];
     fpt_sys_config.fpt_mem_model_init_pattern = new[fpt_sys_config.fpt_slave_numb];
+
+    // SPECIFIC INFO ABOUT MEMORY MODEL - CORRESPONDING TO THE SLAVE
     fpt_sys_config.fpt_mem_model_base_addr[0] = 'h0;
     fpt_sys_config.fpt_mem_model_addr_range[0] = 'h0000FFFF;
     fpt_sys_config.fpt_mem_model_init_pattern[0] = FPT_MEMORY_INIT_PATTERN_E'(INCR);
 
+    fpt_sys_config.fpt_mem_model_base_addr[1] = 'h10000;
+    fpt_sys_config.fpt_mem_model_addr_range[1] = 'hFFFF;
+    fpt_sys_config.fpt_mem_model_init_pattern[1] = FPT_MEMORY_INIT_PATTERN_E'(ALL1);
+
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;
-
-    fpt_sys_config.fpt_pready_timeout[0] = 1000;
 
     uvm_config_db#(fpt_apb_sys_config)::set(this, "*", "fpt_apb_sys_config", fpt_sys_config);
     apb_env_h = fpt_apb_env::type_id::create("fpt_apb_env",this);
@@ -91,20 +96,25 @@ endfunction  : end_of_elaboration_phase
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::run_phase(uvm_phase phase);
     fpt_apb_master_seq fpt_master_seq;
-    fpt_apb_slave_seq  fpt_slave_seq;
+    fpt_apb_slave_seq  fpt_slave_seq_0;
+    fpt_apb_slave_seq fpt_slave_seq_1;
 
     phase.raise_objection(this);
 
     fpt_master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
-    fpt_slave_seq  = fpt_apb_slave_seq::type_id::create("fpt_slave_seq");
+    fpt_slave_seq_0 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_0");
+    fpt_slave_seq_1 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_1");
     
     fork
         fpt_master_seq.start(
             apb_env_h.fpt_master_agents[0].m_apb_master_sequencer
         );
 
-        fpt_slave_seq.start(
+        fpt_slave_seq_0.start(
             apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
+        );
+        fpt_slave_seq_1.start(
+            apb_env_h.fpt_slave_agents[1].m_apb_slave_sequencer
         );
     join
     

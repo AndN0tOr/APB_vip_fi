@@ -10,13 +10,14 @@ class fpt_apb_env extends uvm_env;
 	fpt_apb_sys_config fpt_sys_config;
 	fpt_apb_master_agent fpt_master_agents[];
 	fpt_apb_slave_agent fpt_slave_agents[];
-	fpt_apb_vif_t vif;
+	fpt_apb_sys_vif_t fpt_sys_vif;
 
 	//--------------------------------------------------------------------
 	//	Methods
 	//--------------------------------------------------------------------
 	extern function new(string name = "fpt_apb_env", uvm_component parent= null );
 	extern virtual function void build_phase(uvm_phase phase);	
+	extern virtual function void connect_phase(uvm_phase phase);
     extern function void fpt_apb_malloc_array();
     extern function void fpt_build_and_config_mem_models();
 endclass
@@ -40,7 +41,7 @@ function void fpt_apb_env::fpt_build_and_config_mem_models();
     foreach (fpt_slave_agents[i]) begin
         // Instantiate instance from the apb env
 		fpt_slave_agents[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
-		fpt_slave_agents[i].fpt_mem_model = fpt_apb_mem_model_t::type_id::create($sformatf("slave_mem_model_%0d", i));
+		fpt_slave_agents[i].fpt_mem_model = fpt_common_mem_model_t::type_id::create($sformatf("slave_mem_model_%0d", i));
 
 		fpt_slave_agents[i].fpt_mem_model.fpt_base_addr  = fpt_sys_config.fpt_mem_model_base_addr[i];
 		fpt_slave_agents[i].fpt_mem_model.fpt_addr_range = fpt_sys_config.fpt_mem_model_addr_range[i];
@@ -58,10 +59,27 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
     end
 	fpt_apb_malloc_array();
 	fpt_build_and_config_mem_models();
-	if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
-		`uvm_fatal(get_full_name(), "No virtual interface specified for env")
-	end
-		
 endfunction: build_phase
 
+function void fpt_apb_env::connect_phase(uvm_phase phase);
+	super.connect_phase(phase);
+
+    if (!uvm_config_db#(fpt_apb_sys_vif_t)::get(this, "", "fpt_apb_sys_vif", fpt_sys_vif)) begin
+        `uvm_fatal("NO_SYS_VIF", "Could not find fpt_apb_sys_if_t in config_db")
+    end
+
+    // Đổ cấu hình Master Priority xuống phần cứng
+    foreach (fpt_sys_config.fpt_master_priority[i]) begin
+        fpt_sys_vif.fpt_set_master_priority(i, fpt_sys_config.fpt_master_priority[i]);
+    end
+
+    // Đổ cấu hình Slave Address Map xuống phần cứng
+    foreach (fpt_sys_config.fpt_mem_model_base_addr[i]) begin
+        fpt_sys_vif.fpt_set_memory_map(
+            i, 
+            fpt_sys_config.fpt_mem_model_base_addr[i], 
+            fpt_sys_config.fpt_mem_model_addr_range[i]
+        );
+    end
+endfunction
 `endif

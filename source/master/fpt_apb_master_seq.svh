@@ -32,8 +32,10 @@ task fpt_apb_master_seq::body();
 	repeat(num_items) begin
 		m_apb_master_seq_item = fpt_apb_master_seq_item::type_id::create("m_apb_master_seq_item");
 		start_item(m_apb_master_seq_item);
-		assert (m_apb_master_seq_item.randomize());
-
+		assert (m_apb_master_seq_item.randomize() with {
+			PADDR >= 'h0000;
+			PADDR <= 'h1FFFF;
+			});
 		if (enable_log)
 		$fdisplay(log_file, "%s",
 			m_apb_master_seq_item.sprint(uvm_default_line_printer));
