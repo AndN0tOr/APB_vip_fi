@@ -2,25 +2,25 @@
 `define FPT_APB_IF_SV
 
 interface fpt_apb_if #(
-    parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16
+    parameter FPT_DATA_WIDTH = 32,
+    parameter FPT_ADDR_WIDTH = 32
 )(
     input logic PCLK,
     input logic PRESETn
 );
     // Address and control signals
-    logic [ADDR_WIDTH-1:0] PADDR;
+    logic [FPT_ADDR_WIDTH-1:0] PADDR;
     logic PSEL;
     logic PENABLE;
     logic PWRITE;
 
     // Write data signal
-    logic [DATA_WIDTH-1:0] PWDATA;
-    logic [DATA_WIDTH/8-1:0] PSTRB;
+    logic [FPT_DATA_WIDTH-1:0] PWDATA;
+    logic [FPT_DATA_WIDTH/8-1:0] PSTRB;
 
     // Response signals
     logic PREADY;
-    logic [DATA_WIDTH-1:0] PRDATA;
+    logic [FPT_DATA_WIDTH-1:0] PRDATA;
     logic PSLVERR;
 
     clocking master_drv_cb@ (posedge PCLK);
