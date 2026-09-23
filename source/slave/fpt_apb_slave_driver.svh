@@ -6,7 +6,7 @@ class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
 
     fpt_apb_vif_t vif;
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
-    fpt_apb_mem_model_t fpt_mem_model;
+    fpt_common_mem_model_t fpt_mem_model;
 
     extern function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);

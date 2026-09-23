@@ -1,7 +1,7 @@
 `ifndef FPT_APB_SYS_CONFIG_SVH
 `define FPT_APB_SYS_CONFIG_SVH
 
-`include "fpt_apb_mem_model_t.svh"
+`include "fpt_common_mem_model_t.svh"
 
 class fpt_apb_sys_config extends uvm_object;
     `uvm_object_utils(fpt_apb_sys_config)

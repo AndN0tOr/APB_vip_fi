@@ -12,7 +12,7 @@ package fpt_apb_slave_pkg;
     import fpt_apb_enum_pkg::*;
     import fpt_apb_typedef_pkg::*;
 
-    `include "../../tests/fpt_apb_mem_model_t.svh"
+    `include "../../tests/fpt_common_mem_model_t.svh"
     `include "fpt_apb_slave_seq_item.svh"
     `include "fpt_apb_slave_seq.svh"
     `include "fpt_apb_slave_sequencer.svh"

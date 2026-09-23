@@ -9,7 +9,7 @@ class fpt_apb_slave_agent extends uvm_agent;
     fpt_apb_slave_driver m_apb_slave_driver;
     fpt_apb_slave_sequencer m_apb_slave_sequencer;
     fpt_apb_slave_monitor m_apb_slave_monitor;
-    fpt_apb_mem_model_t fpt_mem_model;
+    fpt_common_mem_model_t fpt_mem_model;
     fpt_apb_sys_config fpt_sys_config;
     uvm_analysis_port #(fpt_apb_slave_seq_item) item_collected_port;
 
