@@ -24,9 +24,9 @@ endfunction
 // Function: build_phase
 function void fpt_apb_slave_driver::build_phase(uvm_phase phase);
 	super.build_phase(phase);
-    if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
-        `uvm_fatal("NO_VIF", "No virtual interface specified for fpt_apb_slave_driver")
-    end
+    if (!uvm_config_db#(virtual fpt_apb_if)::get(this, "", "fpt_apb_vif", vif)) begin
+            `uvm_fatal("NOVIF", {"virtual interface must be set for: ", get_full_name(), ".vif"})
+        end
 endfunction: build_phase	
 
 // Task: run_phase
