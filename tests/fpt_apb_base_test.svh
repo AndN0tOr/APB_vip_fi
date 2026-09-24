@@ -22,6 +22,13 @@ class fpt_apb_base_test extends uvm_test;
     extern virtual function void end_of_elaboration_phase(uvm_phase phase);
     extern virtual task run_phase(uvm_phase phase);
 
+    extern task start_master_slave_seq(
+        uvm_sequence_base master_seq,
+        uvm_sequence_base slave_seq
+    );
+
+    extern virtual task seq_control();
+
 endclass : fpt_apb_base_test
 
 //--------------------------------------------------------------------------------------------
@@ -98,18 +105,50 @@ task fpt_apb_base_test::run_phase(uvm_phase phase);
     fpt_master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
     fpt_slave_seq  = fpt_apb_slave_seq::type_id::create("fpt_slave_seq");
     
-    fork
-        fpt_master_seq.start(
-            apb_env_h.fpt_master_agents[0].m_apb_master_sequencer
-        );
-
-        fpt_slave_seq.start(
-            apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
-        );
-    join
+    seq_control();
     
     phase.drop_objection(this);
-
 endtask : run_phase
+
+
+task fpt_apb_base_test::start_master_slave_seq(
+    uvm_sequence_base master_seq,
+    uvm_sequence_base slave_seq
+);
+    fork
+        slave_seq.start(apb_env_h
+                .fpt_slave_agents[0]
+                .m_apb_slave_sequencer
+        );
+
+        master_seq.start(
+            apb_env_h
+                .fpt_master_agents[0]
+                .m_apb_master_sequencer
+        );
+    join
+endtask
+
+
+task fpt_apb_base_test::seq_control();
+endtask
+
+// task fpt_apb_base_test::check_read(
+//     input bit [`FPT_APB_DATA_WIDTH-1:0] expected
+// );
+//     bit [`FPT_APB_DATA_WIDTH-1:0] actual;
+//     if (actual !== expected)
+//         `uvm_error(
+//             "APB_MEM_TEST",
+//             $sformatf("%s: expected 0x%08h, got 0x%08h",
+//                         description, expected, actual)
+//         )
+//     // else
+//     //     `uvm_info(
+//     //         "APB_MEM_TEST",
+//     //         $sformatf("%s passed: read 0x%08h", description, actual),
+//     //         UVM_LOW
+//     //     )
+// endtask
 
 `endif

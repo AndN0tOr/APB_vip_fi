@@ -9,6 +9,11 @@ class fpt_apb_slave_seq extends uvm_sequence#(fpt_apb_slave_seq_item);
 	
 	extern function new (string name = "fpt_apb_slave_seq");
 	extern task body();	
+
+	extern virtual task apb_slave_resp(
+        input int unsigned  pready_delay = 0,
+        input slave_error_e response_error = NO_ERROR
+    );
 endclass
 	
 // Function: new
@@ -50,5 +55,24 @@ task fpt_apb_slave_seq::body();
 	if (enable_log)
     $fclose(log_file);
 endtask
+
+task fpt_apb_slave_seq::apb_slave_resp(
+    input int unsigned  pready_delay = 0,
+    input slave_error_e response_error = NO_ERROR
+);
+    fpt_apb_slave_seq_item item;
+
+    item = fpt_apb_slave_seq_item::type_id::create(
+        "slave_response_item"
+    );
+
+    start_item(item);
+
+    item.delay   = pready_delay;
+    item.PSLVERR = response_error;
+
+    finish_item(item);
+endtask
+
 
 `endif
