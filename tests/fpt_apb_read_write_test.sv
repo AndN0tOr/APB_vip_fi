@@ -6,42 +6,66 @@
 class fpt_apb_read_write_slave_seq extends fpt_apb_slave_seq;
     `uvm_object_utils(fpt_apb_read_write_slave_seq)
 
-    int unsigned num_items = 2;
+    bit [`FPT_APB_ADDR_WIDTH-1:0] base_address = 'b0;
+    bit [`FPT_APB_DATA_WIDTH-1:0] mem_size = 'h00010000;
+    int unsigned word_count = mem_size / 4; // 4 byte / word
 
     function new(string name = "fpt_apb_read_write_slave_seq");
         super.new(name);
     endfunction
 
     virtual task body();
-        fpt_apb_slave_seq_item item;
-
-        // repeat (num_items) begin
-        //     item = fpt_apb_slave_seq_item::type_id::create("item");
-        //     start_item(item);
-        //     item.delay   = 0;
-        //     item.PSLVERR = NO_ERROR;
-        //     finish_item(item);
-        // end
-
-        apb_slave_resp(0, NO_ERROR);
-        apb_slave_resp(2, ERROR);
+        // Write one 32-bit word at each address.
+        for (int unsigned i = 0; i < word_count * 2; i++) begin
+            apb_slave_resp(RAND_DELAY);
+        end
     endtask
 endclass
 
 class fpt_apb_read_write_master_seq extends fpt_apb_master_seq;
     `uvm_object_utils(fpt_apb_read_write_master_seq)
 
-    localparam bit [`FPT_APB_ADDR_WIDTH-1:0] TEST_ADDR = 'h100;
+    bit [`FPT_APB_ADDR_WIDTH-1:0] base_address = 'b0;
+    bit [`FPT_APB_DATA_WIDTH-1:0] mem_size = 'h00010000;
+    int unsigned word_count = mem_size / 4; // 4 byte / word
+
+    bit [`FPT_APB_ADDR_WIDTH-1:0] address;
+    bit [`FPT_APB_DATA_WIDTH-1:0] write_data;
+    bit [`FPT_APB_DATA_WIDTH-1:0] read_data;
+
 
     function new(string name = "fpt_apb_read_write_master_seq");
         super.new(name);
     endfunction
 
     virtual task body();
-        bit [`FPT_APB_DATA_WIDTH-1:0] read_data;
-        
-        apb_master_write(TEST_ADDR, 32'h1122_3344, '1, 100);
-        apb_master_read(TEST_ADDR, read_data);
+        for (int unsigned i = 0; i < word_count; i++) begin
+            address    = base_address + (i * 4);
+            write_data = (i << 16) + i;
+
+            apb_master_write(address, write_data, 4'b1111, RAND_DELAY);
+        end
+
+        for (int unsigned i = 0; i < word_count; i++) begin
+            address    = base_address + (i * 4);
+            write_data = (i << 16) + i;
+
+            apb_master_read(address, read_data, RAND_DELAY);
+
+            if (read_data !== write_data) begin
+            `uvm_error(
+                "MEM_READBACK",
+                $sformatf(
+                    "Address=0x%08h expected=0x%08h actual=0x%08h",
+                    address,
+                    write_data,
+                    read_data
+                )
+            )
+        end
+        end
+
+       
     endtask
 endclass
 

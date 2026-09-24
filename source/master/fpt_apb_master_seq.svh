@@ -9,17 +9,20 @@ class fpt_apb_master_seq extends uvm_sequence#(fpt_apb_master_seq_item);
 	extern function new (string name = "fpt_apb_master_seq");
 	extern task body();	
 
-	 extern virtual task apb_master_write(
-        input bit [`FPT_APB_ADDR_WIDTH-1:0]         write_address,
-        input bit [`FPT_APB_DATA_WIDTH-1:0]         write_data,
-        input bit [(`FPT_APB_DATA_WIDTH/8)-1:0]     write_strobe,
-		input int unsigned delay = 0
-    );
+	extern virtual task apb_master_write(
+		input  bit [`FPT_APB_ADDR_WIDTH-1:0]     	write_address,
+		input  bit [`FPT_APB_DATA_WIDTH-1:0]     	write_data,
+		input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe,
+		input  delay_rand_option_e  			 	delay_rand = SET_DELAY,
+		input  int unsigned  						delay = 0
+	);
 
     extern virtual task apb_master_read(
-        input  bit [`FPT_APB_ADDR_WIDTH-1:0] read_address,
-        output bit [`FPT_APB_DATA_WIDTH-1:0] read_data
-    );
+		input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
+		output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
+		input  	delay_rand_option_e 			delay_rand = SET_DELAY,
+		input 	int unsigned  					delay = 0
+	);
 endclass
 	
 // Function: new
@@ -58,20 +61,36 @@ task fpt_apb_master_seq::body();
 endtask
 
 task fpt_apb_master_seq::apb_master_write(
-    input  bit [`FPT_APB_ADDR_WIDTH-1:0]     write_address,
-    input  bit [`FPT_APB_DATA_WIDTH-1:0]     write_data,
-    input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] write_strobe,
-	input int unsigned delay = 0
+    input  bit [`FPT_APB_ADDR_WIDTH-1:0]     	write_address,
+    input  bit [`FPT_APB_DATA_WIDTH-1:0]     	write_data,
+    input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe,
+	input  delay_rand_option_e  			 	delay_rand = SET_DELAY,
+	input  int unsigned  						delay = 0
 );
     fpt_apb_master_seq_item item;
 
     item = fpt_apb_master_seq_item::type_id::create("item");
+
     start_item(item);
+
+	// The controlled helper assigns all transaction fields directly. Only
+	// delay may be enabled for randomization.
+	item.rand_mode(0);
+	item.delay.rand_mode(delay_rand == RAND_DELAY);
+
     item.PADDR  = write_address;
     item.PWRITE = WRITE;
     item.PWDATA = write_data;
     item.PSTRB  = write_strobe;
-    item.delay  = delay;
+
+	if (delay_rand == SET_DELAY) begin
+    	item.delay = delay;
+	end
+	else begin
+		if (!item.randomize())
+			`uvm_fatal("RAND_FAIL", "Failed to randomize master delay")
+	end
+
     finish_item(item);
 
     // if (item.PSLVERR != NO_ERROR)
@@ -85,16 +104,32 @@ endtask
 
 task fpt_apb_master_seq::apb_master_read(
     input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
-    output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data
+	output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
+	input  	delay_rand_option_e 			delay_rand = SET_DELAY,
+	input 	int unsigned  					delay = 0
 );
     fpt_apb_master_seq_item item;
 
     item = fpt_apb_master_seq_item::type_id::create("item");
     start_item(item);
+
+	// The controlled helper assigns all transaction fields directly. Only
+	// delay may be enabled for randomization.
+	item.rand_mode(0);
+	item.delay.rand_mode(delay_rand == RAND_DELAY);
+
     item.PADDR  = read_address;
     item.PWRITE = READ;
     item.PSTRB  = 4'b0;
-    item.delay  = 0;
+
+	if (delay_rand == SET_DELAY) begin
+    	item.delay = delay;
+	end
+	else begin
+		if (!item.randomize())
+			`uvm_fatal("RAND_FAIL", "Failed to randomize master delay")
+	end
+
     finish_item(item);
 
     // if (item.PSLVERR != NO_ERROR)

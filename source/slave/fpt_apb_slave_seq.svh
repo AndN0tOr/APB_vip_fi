@@ -10,10 +10,12 @@ class fpt_apb_slave_seq extends uvm_sequence#(fpt_apb_slave_seq_item);
 	extern function new (string name = "fpt_apb_slave_seq");
 	extern task body();	
 
-	extern virtual task apb_slave_resp(
-        input int unsigned  pready_delay = 0,
-        input slave_error_e response_error = NO_ERROR
-    );
+	extern task apb_slave_resp(
+		input delay_rand_option_e delay_rand = SET_DELAY,
+		input pslverr_rand_option_e	err_rand = SET_ERR,		
+		input slave_error_e response_error = NO_ERROR,
+		input int unsigned  pready_delay = 0
+	);
 endclass
 	
 // Function: new
@@ -57,8 +59,10 @@ task fpt_apb_slave_seq::body();
 endtask
 
 task fpt_apb_slave_seq::apb_slave_resp(
-    input int unsigned  pready_delay = 0,
-    input slave_error_e response_error = NO_ERROR
+	input delay_rand_option_e delay_rand = SET_DELAY,
+	input pslverr_rand_option_e	err_rand = SET_ERR,		
+	input slave_error_e response_error = NO_ERROR,
+    input int unsigned  pready_delay = 0
 );
     fpt_apb_slave_seq_item item;
 
@@ -68,8 +72,25 @@ task fpt_apb_slave_seq::apb_slave_resp(
 
     start_item(item);
 
-    item.delay   = pready_delay;
-    item.PSLVERR = response_error;
+	item.rand_mode(0);
+
+	item.delay.rand_mode(delay_rand == RAND_DELAY);
+    item.PSLVERR.rand_mode(err_rand == RAND_ERR);
+
+    // Assign fields that are not being randomized.
+    if (delay_rand == SET_DELAY)
+        item.delay = pready_delay;
+
+    if (err_rand == SET_ERR)
+        item.PSLVERR = response_error;
+
+    if ((delay_rand == RAND_DELAY) || (err_rand   == RAND_ERR)) begin
+        if (!item.randomize())
+            `uvm_fatal(
+                "RAND_FAIL",
+                "Failed to randomize slave response"
+            )
+    end
 
     finish_item(item);
 endtask

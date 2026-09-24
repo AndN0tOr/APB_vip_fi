@@ -44,6 +44,16 @@ package fpt_apb_enum_pkg;
     //     BIT_32 = 32'd32
     // } transfer_size_e;
 
+    typedef enum bit{
+        RAND_DELAY = 1'b1,
+        SET_DELAY = 1'b0 
+    } delay_rand_option_e;
+
+    typedef enum bit{
+        RAND_ERR = 1'b1,
+        SET_ERR = 1'b0 
+    } pslverr_rand_option_e;
+
 endpackage: fpt_apb_enum_pkg
 
 `endif

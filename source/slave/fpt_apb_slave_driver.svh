@@ -87,7 +87,7 @@ endtask
 // Description: This class is used give initial value to apb slave signals.	
 task fpt_apb_slave_driver::init_signals();
 	vif.slave_drv_cb.PREADY  <= 1'b0;	
-    vif.slave_drv_cb.PRDATA  <= '0;	
+    //vif.slave_drv_cb.PRDATA  <= '0;	
     vif.slave_drv_cb.PSLVERR <= 1'b0;	
 endtask		
 
