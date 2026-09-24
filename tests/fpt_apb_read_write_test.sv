@@ -43,14 +43,23 @@ class fpt_apb_read_write_master_seq extends fpt_apb_master_seq;
             address    = base_address + (i * 4);
             write_data = (i << 16) + i;
 
-            apb_master_write(address, write_data, 4'b1111, RAND_DELAY);
+            apb_master_write(
+                .write_address(address), 
+                .write_data(write_data), 
+                .delay_rand(RAND_DELAY),
+                .write_strobe('hF)
+            );
         end
 
         for (int unsigned i = 0; i < word_count; i++) begin
             address    = base_address + (i * 4);
             write_data = (i << 16) + i;
 
-            apb_master_read(address, read_data, RAND_DELAY);
+            apb_master_read(
+                .read_address(address), 
+                .read_data(read_data), 
+                .delay_rand(RAND_DELAY)
+            );
 
             if (read_data !== write_data) begin
             `uvm_error(

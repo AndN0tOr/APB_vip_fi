@@ -101,10 +101,11 @@ task fpt_apb_master_monitor::run_phase(uvm_phase phase);
             `uvm_info(
                 get_type_name(),
                 $sformatf(
-                    "Observed APB transfer: address=0x%0h, write=%s, rdata=%0h wait_cycles=%0d",
+                    "Observed APB transfer: address=0x%0h, write=%s, rdata=%0h, strb=%0b, wait_cycles=%0d" ,
                     item.PADDR,
                     item.PWRITE.name(),
                     item.PRDATA,
+                    item.PSTRB,
                     item.delay
                 ),
                 UVM_MEDIUM
