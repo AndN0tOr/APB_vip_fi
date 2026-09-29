@@ -20,6 +20,7 @@ import fpt_apb_master_pkg::*;
 `include "fpt_apb_base_test.svh"
 `include "fpt_apb_rst_test.sv"
 `include "fpt_apb_read_write_test.sv"
+`include "fpt_apb_pstrb_test.sv"
 `include "fpt_apb_sys_config.svh"
 
 
@@ -51,11 +52,11 @@ module fpt_apb_tb_top;
         // Apply a second reset pulse only in the reset test.
         if ($value$plusargs("UVM_TESTNAME=%s", selected_test) &&
             selected_test == "fpt_apb_rst_test") begin
-            repeat (4) @(posedge PCLK);
-            PRESETn <= 1'b0;
+            // repeat (4) @(posedge PCLK);
+            // PRESETn <= 1'b0;
 
-            repeat (2) @(posedge PCLK);
-            PRESETn <= 1'b1;
+            // repeat (2) @(posedge PCLK);
+            // PRESETn <= 1'b1;
         end
     end
     // initial begin 
