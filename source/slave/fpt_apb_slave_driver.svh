@@ -6,7 +6,7 @@ class fpt_apb_slave_driver extends uvm_driver#(fpt_apb_slave_seq_item);
 
     fpt_apb_vif_t vif;
     fpt_apb_slave_seq_item m_apb_slave_seq_item;
-    fpt_apb_mem_model_t fpt_mem_model;
+    fpt_common_mem_model_t fpt_mem_model;
 
     extern function new(string name = "fpt_apb_slave_driver", uvm_component parent = null);
 	extern virtual function void build_phase(uvm_phase phase);
@@ -24,9 +24,9 @@ endfunction
 // Function: build_phase
 function void fpt_apb_slave_driver::build_phase(uvm_phase phase);
 	super.build_phase(phase);
-    if (!uvm_config_db#(fpt_apb_vif_t)::get(this, "", "fpt_apb_vif", vif)) begin
-        `uvm_fatal("NO_VIF", "No virtual interface specified for fpt_apb_slave_driver")
-    end
+    if (!uvm_config_db#(virtual fpt_apb_if)::get(this, "", "fpt_apb_vif", vif)) begin
+            `uvm_fatal("NOVIF", {"virtual interface must be set for: ", get_full_name(), ".vif"})
+        end
 endfunction: build_phase	
 
 // Task: run_phase
@@ -47,11 +47,15 @@ task fpt_apb_slave_driver::run_phase(uvm_phase phase);
         reset_seen            = 1'b0;
         transaction_completed = 1'b0;
 
-        fork: TRANSFER_OR_RESET
-            drive_one_response(transaction_completed);
-            reset_detect(reset_seen);
-        join_any
-        disable TRANSFER_OR_RESET;
+        fork
+            begin
+                fork
+                    drive_one_response(transaction_completed);
+                    reset_detect(reset_seen);
+                join_any
+                disable fork;
+            end
+        join
 
         if (reset_seen || vif.PRESETn !== 1'b1) begin
             `uvm_info(

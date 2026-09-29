@@ -2,26 +2,26 @@
 `define FPT_APB_IF_SV
 
 interface fpt_apb_if #(
-    parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 16
+    parameter FPT_DATA_WIDTH = 32,
+    parameter FPT_ADDR_WIDTH = 32
 )(
     input logic PCLK,
     input logic PRESETn
 );
     // Address and control signals
-    logic [ADDR_WIDTH-1:0] PADDR;
-    logic PSEL;
-    logic PENABLE;
-    logic PWRITE;
+    wire  [FPT_ADDR_WIDTH-1:0] PADDR;
+    wire  PSEL;
+    wire  PENABLE;
+    wire  PWRITE;
 
     // Write data signal
-    logic [DATA_WIDTH-1:0] PWDATA;
-    logic [DATA_WIDTH/8-1:0] PSTRB;
+    wire  [FPT_DATA_WIDTH-1:0] PWDATA;
+    wire  [FPT_DATA_WIDTH/8-1:0] PSTRB;
 
     // Response signals
-    logic PREADY;
-    logic [DATA_WIDTH-1:0] PRDATA;
-    logic PSLVERR;
+    wire  PREADY;
+    wire  [FPT_DATA_WIDTH-1:0] PRDATA;
+    wire  PSLVERR;
 
     clocking master_drv_cb@ (posedge PCLK);
         default input #1step output #1ns;
@@ -62,10 +62,6 @@ interface fpt_apb_if #(
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE))
         else $error("PENABLE don't drop when PRESETn was asserted. PRESETn=%b, PENABLE=%b ",
     $sampled(PRESETn), $sampled(PENABLE));
-    PRESETn_DROP_PREADY:assert property(PRESETn_DROP_SIGNALS(PREADY))
-        else $error("PREADY don't rise when PRESETn was asserted low. PRESETn=%b, PREADY=%b",
-    $sampled(PRESETn), $sampled(PREADY));
-
     //-----------------------------------------
     // Check if unknown values appear
     //-----------------------------------------

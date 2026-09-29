@@ -14,6 +14,7 @@ class fpt_apb_base_test extends uvm_test;
     //Declaring a handle for env
     fpt_apb_env apb_env_h;
     fpt_apb_sys_config fpt_sys_config;
+    int err_log_fd;
     //-------------------------------------------------------
     // Externally defined Tasks and Functions
     //-------------------------------------------------------
@@ -51,26 +52,26 @@ endfunction : new
 //--------------------------------------------------------------------------------------------
 function void fpt_apb_base_test::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    //setup_apb_env_config();
     fpt_sys_config = fpt_apb_sys_config::type_id::create("fpt_sys_config", this);
-    fpt_sys_config.fpt_master_numb = 1;
-    fpt_sys_config.fpt_master_priority = new[fpt_sys_config.fpt_master_numb];
-    fpt_sys_config.fpt_pready_timeout = new[fpt_sys_config.fpt_master_numb];
-    fpt_sys_config.fpt_master_priority[0] = 1;
-    fpt_sys_config.fpt_pready_timeout[0] = 1000;
+    fpt_sys_config.fpt_pready_timeout = 1000;
 
-    fpt_sys_config.fpt_slave_numb  = 1;
+    // CONFIGURE NUMBER OF SLAVE AND ALLOCATE MEMORY
+    fpt_sys_config.fpt_slave_numb  = 2;
     fpt_sys_config.fpt_mem_model_base_addr = new[fpt_sys_config.fpt_slave_numb];
     fpt_sys_config.fpt_mem_model_addr_range = new[fpt_sys_config.fpt_slave_numb];
     fpt_sys_config.fpt_mem_model_init_pattern = new[fpt_sys_config.fpt_slave_numb];
+
+    // SPECIFIC INFO ABOUT MEMORY MODEL - CORRESPONDING TO THE SLAVE
     fpt_sys_config.fpt_mem_model_base_addr[0] = 'h0;
     fpt_sys_config.fpt_mem_model_addr_range[0] = 'h0000FFFF;
     fpt_sys_config.fpt_mem_model_init_pattern[0] = FPT_MEMORY_INIT_PATTERN_E'(INCR);
 
+    fpt_sys_config.fpt_mem_model_base_addr[1] = 'h10000;
+    fpt_sys_config.fpt_mem_model_addr_range[1] = 'hFFFF;
+    fpt_sys_config.fpt_mem_model_init_pattern[1] = FPT_MEMORY_INIT_PATTERN_E'(ALL1);
+
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;
-
-    fpt_sys_config.fpt_pready_timeout[0] = 1000;
 
     uvm_config_db#(fpt_apb_sys_config)::set(this, "*", "fpt_apb_sys_config", fpt_sys_config);
     apb_env_h = fpt_apb_env::type_id::create("fpt_apb_env",this);
@@ -86,6 +87,13 @@ endfunction : build_phase
 function void fpt_apb_base_test::end_of_elaboration_phase(uvm_phase phase);
     super.end_of_elaboration_phase(phase);
     uvm_top.print_topology();
+
+    // Send warnings/errors/fatals to a log file instead of the terminal.
+    err_log_fd = $fopen("apb_error.log", "w");
+    uvm_top.set_report_default_file_hier(err_log_fd);
+    uvm_top.set_report_severity_action_hier(UVM_WARNING, UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_ERROR,   UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_FATAL,   UVM_LOG | UVM_EXIT);
     uvm_test_done.set_drain_time(this,1000ns);
 endfunction  : end_of_elaboration_phase
 
@@ -98,57 +106,32 @@ endfunction  : end_of_elaboration_phase
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::run_phase(uvm_phase phase);
     fpt_apb_master_seq fpt_master_seq;
-    fpt_apb_slave_seq  fpt_slave_seq;
+    fpt_apb_slave_seq  fpt_slave_seq_0;
+    fpt_apb_slave_seq fpt_slave_seq_1;
 
     phase.raise_objection(this);
 
     fpt_master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
-    fpt_slave_seq  = fpt_apb_slave_seq::type_id::create("fpt_slave_seq");
+    fpt_slave_seq_0 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_0");
+    fpt_slave_seq_1 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_1");
     
-    seq_control();
-    
-    phase.drop_objection(this);
-endtask : run_phase
-
-
-task fpt_apb_base_test::start_master_slave_seq(
-    uvm_sequence_base master_seq,
-    uvm_sequence_base slave_seq
-);
+    // Slaves are reactive background responders: only the master
+    // sequence decides when the test ends.
     fork
-        slave_seq.start(apb_env_h
-                .fpt_slave_agents[0]
-                .m_apb_slave_sequencer
+        fpt_slave_seq_0.start(
+            apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
         );
-
-        master_seq.start(
-            apb_env_h
-                .fpt_master_agents[0]
-                .m_apb_master_sequencer
+        fpt_slave_seq_1.start(
+            apb_env_h.fpt_slave_agents[1].m_apb_slave_sequencer
         );
-    join
-endtask
+    join_none
 
+    fpt_master_seq.start(
+        apb_env_h.fpt_master_agent.m_apb_master_sequencer
+    );
 
-task fpt_apb_base_test::seq_control();
-endtask
+    phase.drop_objection(this);
 
-// task fpt_apb_base_test::check_read(
-//     input bit [`FPT_APB_DATA_WIDTH-1:0] expected
-// );
-//     bit [`FPT_APB_DATA_WIDTH-1:0] actual;
-//     if (actual !== expected)
-//         `uvm_error(
-//             "APB_MEM_TEST",
-//             $sformatf("%s: expected 0x%08h, got 0x%08h",
-//                         description, expected, actual)
-//         )
-//     // else
-//     //     `uvm_info(
-//     //         "APB_MEM_TEST",
-//     //         $sformatf("%s passed: read 0x%08h", description, actual),
-//     //         UVM_LOW
-//     //     )
-// endtask
+endtask : run_phase
 
 `endif

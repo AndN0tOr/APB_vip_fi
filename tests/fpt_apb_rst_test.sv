@@ -37,7 +37,7 @@ class fpt_apb_rst_test extends fpt_apb_base_test;
         join_none
 
         master_seq.start(
-            apb_env_h.fpt_master_agents[0].m_apb_master_sequencer
+            apb_env_h.fpt_master_agent.m_apb_master_sequencer
         );
         @(vif.slave_drv_cb);
         slave_seq.kill();

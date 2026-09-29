@@ -1,6 +1,14 @@
 `ifndef FPT_APB_DEF_SVH
 `define FPT_APB_DEF_SVH
 
+`ifndef FPT_APB_MAX_MASTER
+`define FPT_APB_MAX_MASTER 4
+`endif 
+
+`ifndef FPT_APB_MAX_SLAVE
+`define FPT_APB_MAX_SLAVE 8
+`endif
+
 `ifndef FPT_APB_ADDR_WIDTH
 `define FPT_APB_ADDR_WIDTH 32
 `endif
@@ -8,7 +16,6 @@
 `ifndef FPT_APB_DATA_WIDTH
 `define FPT_APB_DATA_WIDTH 32
 `endif
-
 // Slave PREADY delay profiles, measured in PCLK cycles.
 `ifndef FPT_APB_PREADY_DELAY_LOW
 `define FPT_APB_PREADY_DELAY_LOW [0:15]
