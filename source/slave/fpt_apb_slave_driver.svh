@@ -47,7 +47,6 @@ task fpt_apb_slave_driver::run_phase(uvm_phase phase);
         reset_seen            = 1'b0;
         transaction_completed = 1'b0;
 
-        // Inner fork/join wrapper keeps disable fork local to this driver.
         fork
             begin
                 fork

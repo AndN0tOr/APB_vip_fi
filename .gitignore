@@ -14,3 +14,6 @@ csrc
 simv
 simv.daidir
 vc_hdrs.h
+# AI document
+doc/reviews/*.md
+doc/checkpoint/*.md
