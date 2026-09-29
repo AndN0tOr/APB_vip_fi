@@ -43,16 +43,6 @@ class fpt_apb_pslverr_master_seq extends fpt_apb_master_seq;
             .write_strobe('1)
         );
 
-        // // Use the item directly so the returned PSLVERR can be checked.
-        // error_write = fpt_apb_master_seq_item::type_id::create("error_write");
-        // start_item(error_write);
-        // error_write.PADDR  = TEST_ADDR;
-        // error_write.PWRITE = WRITE;
-        // error_write.PWDATA = NEW_DATA;
-        // error_write.PSTRB  = '1;
-        // error_write.delay  = 0;
-        // finish_item(error_write);
-
         apb_master_write(
             .write_address(TEST_ADDR),
             .write_data(NEW_DATA),

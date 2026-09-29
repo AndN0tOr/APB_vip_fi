@@ -20,8 +20,9 @@ import fpt_apb_master_pkg::*;
 `include "fpt_apb_base_test.svh"
 `include "fpt_apb_rst_test.sv"
 `include "fpt_apb_read_write_test.sv"
+`include "fpt_apb_mem_range_test.sv"
 `include "fpt_apb_pstrb_test.sv"
-`include "fpt_apb_pslverr_test.svh"
+`include "fpt_apb_pslverr_test.sv"
 `include "fpt_apb_sys_config.svh"
 
 
