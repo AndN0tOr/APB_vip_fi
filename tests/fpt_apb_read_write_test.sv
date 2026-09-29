@@ -86,18 +86,7 @@ class fpt_apb_read_write_test extends fpt_apb_base_test;
         master_seq = fpt_apb_read_write_master_seq::type_id::create("master_seq");
         slave_seq  = fpt_apb_read_write_slave_seq::type_id::create("slave_seq");
 
-        fork
-            slave_seq.start(
-                apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
-            );
-        join_none
-
-        master_seq.start(
-            apb_env_h.fpt_master_agent.m_apb_master_sequencer
-        );
-
-        wait fork;
-        phase.drop_objection(this);
+        start_master_slave_seq(master_seq, slave_seq);
     endtask
 endclass
 

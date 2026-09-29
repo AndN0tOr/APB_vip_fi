@@ -105,16 +105,41 @@ endfunction  : end_of_elaboration_phase
 //  phase - uvm phase
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::run_phase(uvm_phase phase);
+    phase.raise_objection(this);
+    seq_control();
+    phase.drop_objection(this);
+endtask : run_phase
+
+//--------------------------------------------------------------------------------------------
+// Task: start_master_slave_seq
+//  Starts slave_seq on slave agent 0 as a background responder, then runs
+//  master_seq to completion. The master alone decides when traffic ends.
+//--------------------------------------------------------------------------------------------
+task fpt_apb_base_test::start_master_slave_seq(
+    uvm_sequence_base master_seq,
+    uvm_sequence_base slave_seq
+);
+    fork
+        slave_seq.start(apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer);
+    join_none
+
+    master_seq.start(apb_env_h.fpt_master_agent.m_apb_master_sequencer);
+endtask : start_master_slave_seq
+
+//--------------------------------------------------------------------------------------------
+// Task: seq_control
+//  Default traffic: random master sequence across both slaves. Derived tests
+//  override this task instead of run_phase.
+//--------------------------------------------------------------------------------------------
+task fpt_apb_base_test::seq_control();
     fpt_apb_master_seq fpt_master_seq;
     fpt_apb_slave_seq  fpt_slave_seq_0;
-    fpt_apb_slave_seq fpt_slave_seq_1;
+    fpt_apb_slave_seq  fpt_slave_seq_1;
 
-    phase.raise_objection(this);
-
-    fpt_master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
+    fpt_master_seq  = fpt_apb_master_seq::type_id::create("fpt_master_seq");
     fpt_slave_seq_0 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_0");
     fpt_slave_seq_1 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_1");
-    
+
     // Slaves are reactive background responders: only the master
     // sequence decides when the test ends.
     fork
@@ -129,9 +154,6 @@ task fpt_apb_base_test::run_phase(uvm_phase phase);
     fpt_master_seq.start(
         apb_env_h.fpt_master_agent.m_apb_master_sequencer
     );
-
-    phase.drop_objection(this);
-
-endtask : run_phase
+endtask : seq_control
 
 `endif
