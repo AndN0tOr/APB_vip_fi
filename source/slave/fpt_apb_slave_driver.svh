@@ -47,11 +47,16 @@ task fpt_apb_slave_driver::run_phase(uvm_phase phase);
         reset_seen            = 1'b0;
         transaction_completed = 1'b0;
 
-        fork: TRANSFER_OR_RESET
-            drive_one_response(transaction_completed);
-            reset_detect(reset_seen);
-        join_any
-        disable TRANSFER_OR_RESET;
+        // Inner fork/join wrapper keeps disable fork local to this driver.
+        fork
+            begin
+                fork
+                    drive_one_response(transaction_completed);
+                    reset_detect(reset_seen);
+                join_any
+                disable fork;
+            end
+        join
 
         if (reset_seen || vif.PRESETn !== 1'b1) begin
             `uvm_info(

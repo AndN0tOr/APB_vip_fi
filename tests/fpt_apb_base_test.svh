@@ -14,6 +14,7 @@ class fpt_apb_base_test extends uvm_test;
     //Declaring a handle for env
     fpt_apb_env apb_env_h;
     fpt_apb_sys_config fpt_sys_config;
+    int err_log_fd;
     //-------------------------------------------------------
     // Externally defined Tasks and Functions
     //-------------------------------------------------------
@@ -44,13 +45,8 @@ endfunction : new
 //--------------------------------------------------------------------------------------------
 function void fpt_apb_base_test::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    //setup_apb_env_config();
     fpt_sys_config = fpt_apb_sys_config::type_id::create("fpt_sys_config", this);
-    fpt_sys_config.fpt_master_numb = 1;
-    fpt_sys_config.fpt_master_priority = new[fpt_sys_config.fpt_master_numb];
-    fpt_sys_config.fpt_pready_timeout = new[fpt_sys_config.fpt_master_numb];
-    fpt_sys_config.fpt_master_priority[0] = 1;
-    fpt_sys_config.fpt_pready_timeout[0] = 1000;
+    fpt_sys_config.fpt_pready_timeout = 1000;
 
     // CONFIGURE NUMBER OF SLAVE AND ALLOCATE MEMORY
     fpt_sys_config.fpt_slave_numb  = 2;
@@ -84,6 +80,13 @@ endfunction : build_phase
 function void fpt_apb_base_test::end_of_elaboration_phase(uvm_phase phase);
     super.end_of_elaboration_phase(phase);
     uvm_top.print_topology();
+
+    // Send warnings/errors/fatals to a log file instead of the terminal.
+    err_log_fd = $fopen("apb_error.log", "w");
+    uvm_top.set_report_default_file_hier(err_log_fd);
+    uvm_top.set_report_severity_action_hier(UVM_WARNING, UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_ERROR,   UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_FATAL,   UVM_LOG | UVM_EXIT);
     uvm_test_done.set_drain_time(this,1000ns);
 endfunction  : end_of_elaboration_phase
 
@@ -105,19 +108,21 @@ task fpt_apb_base_test::run_phase(uvm_phase phase);
     fpt_slave_seq_0 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_0");
     fpt_slave_seq_1 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_1");
     
+    // Slaves are reactive background responders: only the master
+    // sequence decides when the test ends.
     fork
-        fpt_master_seq.start(
-            apb_env_h.fpt_master_agents[0].m_apb_master_sequencer
-        );
-
         fpt_slave_seq_0.start(
             apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
         );
         fpt_slave_seq_1.start(
             apb_env_h.fpt_slave_agents[1].m_apb_slave_sequencer
         );
-    join
-    
+    join_none
+
+    fpt_master_seq.start(
+        apb_env_h.fpt_master_agent.m_apb_master_sequencer
+    );
+
     phase.drop_objection(this);
 
 endtask : run_phase

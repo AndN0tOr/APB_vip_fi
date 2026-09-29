@@ -35,7 +35,8 @@ function void fpt_apb_slave_agent::build_phase(uvm_phase phase);
     m_apb_slave_driver      = fpt_apb_slave_driver::type_id::create("m_apb_slave_driver", this);
     m_apb_slave_sequencer   = fpt_apb_slave_sequencer::type_id::create("m_apb_slave_sequencer", this);
     m_apb_slave_monitor     = fpt_apb_slave_monitor::type_id::create("m_apb_slave_monitor", this);
-    uvm_config_db#(fpt_apb_sys_config)::get(this, "", "fpt_sys_config", fpt_sys_config);
+    if (!uvm_config_db#(fpt_apb_sys_config)::get(this, "", "fpt_sys_config", fpt_sys_config))
+        `uvm_info(get_type_name(), "fpt_sys_config not found in config_db, continuing without it", UVM_HIGH)
 endfunction: build_phase	
 
 function void fpt_apb_slave_agent::connect_phase(uvm_phase phase);

@@ -4,6 +4,7 @@
 class fpt_apb_master_driver extends uvm_driver #(fpt_apb_master_seq_item);
     `uvm_component_utils(fpt_apb_master_driver)
     fpt_apb_vif_t vif;
+    int unsigned fpt_pready_timeout;
 
     extern function new (string name = "fpt_apb_master_driver", uvm_component parent = null);
     extern virtual function void build_phase(uvm_phase phase);
@@ -51,12 +52,16 @@ task fpt_apb_master_driver::run_phase(uvm_phase phase);
         reset_seen            = 1'b0;
         transaction_completed = 1'b0;
 
-        fork : TRANSFER_OR_RESET
-            get_and_drive(back_to_back, transaction_completed);
-            reset_detect(reset_seen);
-        join_any
-
-        disable TRANSFER_OR_RESET;
+        // Inner fork/join wrapper keeps disable fork local to this driver.
+        fork
+            begin
+                fork
+                    get_and_drive(back_to_back, transaction_completed);
+                    reset_detect(reset_seen);
+                join_any
+                disable fork;
+            end
+        join
 
         if (reset_seen || !vif.PRESETn) begin
             `uvm_info(
@@ -65,7 +70,7 @@ task fpt_apb_master_driver::run_phase(uvm_phase phase);
                     "Reset detected, dropping transaction '%s'",
                     req.get_name()
                 ),
-                UVM_MEDIUM
+                UVM_HIGH
             )
 
             // Reset or aborted transaction enters IDLE.
@@ -79,7 +84,7 @@ task fpt_apb_master_driver::run_phase(uvm_phase phase);
                     "Completed transaction '%s'",
                     req.get_name()
                 ),
-                UVM_MEDIUM
+                UVM_HIGH
             )
 
             // End ACCESS but keep PSEL asserted so the next zero-delay
@@ -172,7 +177,7 @@ task fpt_apb_master_driver::get_and_drive(
     // ACCESS phase
     vif.master_drv_cb.PENABLE <= 1'b1;
 
-    wait_for_pready(100, pready_seen);
+    wait_for_pready(fpt_pready_timeout, pready_seen);
 
     if (!pready_seen)
         return;

@@ -72,6 +72,7 @@ def main():
     vlog_command = [
     '/home/stupidrat/altera/questasim/linux_x86_64/vlog',
     '-sv',
+    '+cover=bcesf',
     '-work', 'work',
     # --- THÊM 2 ĐƯỜNG DẪN NÀY ĐỂ LIÊN KẾT UVM ---
     '+incdir+/home/stupidrat/altera/questasim/verilog_src/uvm-1.2/src',
@@ -79,8 +80,6 @@ def main():
     # --------------------------------------------
     '+incdir+/home/stupidrat/APB_vip_fi',
     '+incdir+/home/stupidrat/APB_vip_fi/include',
-    # ... (giữ nguyên các đường dẫn cũ của bạn ở phía dưới)
-    '/home/stupidrat/APB_vip_fi/tests/fpt_apb_tb_top.sv'
     ]
     for directory in include_dirs:
         vlog_command.append(f"+incdir+{directory.as_posix()}")
@@ -117,6 +116,7 @@ def main():
             "-l",
             "simulation.log",
             "work.fpt_apb_tb_top",
+            "+UVM_VERBOSITY=UVM_LOW",
             *plusargs,
             "-do",
             "coverage save -onexit coverage.ucdb; onerror {quit -f -code 1}; run -all; quit -f -code 0",
