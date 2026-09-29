@@ -38,10 +38,12 @@ class fpt_apb_pstrb_master_seq extends fpt_apb_master_seq;
         bit [`FPT_APB_DATA_WIDTH-1:0] before_data;
         bit [`FPT_APB_DATA_WIDTH-1:0] expected_data;
         bit [`FPT_APB_DATA_WIDTH-1:0] after_data;
+        slave_error_e read_pslverr;
 
         apb_master_read(
             .read_address(address),
             .read_data(before_data),
+            .read_pslverr(read_pslverr),
             .delay_rand(RAND_DELAY)
         );
 
@@ -62,6 +64,7 @@ class fpt_apb_pstrb_master_seq extends fpt_apb_master_seq;
         apb_master_read(
             .read_address(address),
             .read_data(after_data),
+            .read_pslverr(read_pslverr),
             .delay_rand(RAND_DELAY)
         );
 

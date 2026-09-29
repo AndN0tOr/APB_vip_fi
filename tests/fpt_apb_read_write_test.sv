@@ -32,6 +32,7 @@ class fpt_apb_read_write_master_seq extends fpt_apb_master_seq;
     bit [`FPT_APB_ADDR_WIDTH-1:0] address;
     bit [`FPT_APB_DATA_WIDTH-1:0] write_data;
     bit [`FPT_APB_DATA_WIDTH-1:0] read_data;
+    slave_error_e read_pslverr;
 
 
     function new(string name = "fpt_apb_read_write_master_seq");
@@ -58,6 +59,7 @@ class fpt_apb_read_write_master_seq extends fpt_apb_master_seq;
             apb_master_read(
                 .read_address(address), 
                 .read_data(read_data), 
+                .read_pslverr(read_pslverr),
                 .delay_rand(RAND_DELAY)
             );
 

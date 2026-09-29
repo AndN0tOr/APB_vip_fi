@@ -21,6 +21,7 @@ class fpt_apb_master_seq extends uvm_sequence#(fpt_apb_master_seq_item);
     extern virtual task apb_master_read(
 		input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
 		output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
+		output  slave_error_e 					read_pslverr,
 		input 	int unsigned  					delay = 0,
 		input  	delay_rand_option_e 			delay_rand = SET_DELAY
 	);
@@ -117,6 +118,7 @@ endtask
 task fpt_apb_master_seq::apb_master_read(
     input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
 	output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
+	output  slave_error_e 					read_pslverr,
 	input 	int unsigned  					delay = 0,
 	input  	delay_rand_option_e 			delay_rand = SET_DELAY
 );
@@ -152,6 +154,7 @@ task fpt_apb_master_seq::apb_master_read(
     //     )
 
     read_data = item.PRDATA;
+	read_pslverr = item.PSLVERR;
 endtask
 
 `endif
