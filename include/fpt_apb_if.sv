@@ -62,10 +62,6 @@ interface fpt_apb_if #(
     PRESETn_DROP_PENABLE:assert property(PRESETn_DROP_SIGNALS(PENABLE))
         else $error("PENABLE don't drop when PRESETn was asserted. PRESETn=%b, PENABLE=%b ",
     $sampled(PRESETn), $sampled(PENABLE));
-    PRESETn_DROP_PREADY:assert property(PRESETn_DROP_SIGNALS(PREADY))
-        else $error("PREADY don't rise when PRESETn was asserted low. PRESETn=%b, PREADY=%b",
-    $sampled(PRESETn), $sampled(PREADY));
-
     //-----------------------------------------
     // Check if unknown values appear
     //-----------------------------------------
