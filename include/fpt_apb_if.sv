@@ -9,19 +9,19 @@ interface fpt_apb_if #(
     input logic PRESETn
 );
     // Address and control signals
-    logic [FPT_ADDR_WIDTH-1:0] PADDR;
-    logic PSEL;
-    logic PENABLE;
-    logic PWRITE;
+    wire  [FPT_ADDR_WIDTH-1:0] PADDR;
+    wire  PSEL;
+    wire  PENABLE;
+    wire  PWRITE;
 
     // Write data signal
-    logic [FPT_DATA_WIDTH-1:0] PWDATA;
-    logic [FPT_DATA_WIDTH/8-1:0] PSTRB;
+    wire  [FPT_DATA_WIDTH-1:0] PWDATA;
+    wire  [FPT_DATA_WIDTH/8-1:0] PSTRB;
 
     // Response signals
-    logic PREADY;
-    logic [FPT_DATA_WIDTH-1:0] PRDATA;
-    logic PSLVERR;
+    wire  PREADY;
+    wire  [FPT_DATA_WIDTH-1:0] PRDATA;
+    wire  PSLVERR;
 
     clocking master_drv_cb@ (posedge PCLK);
         default input #1step output #1ns;

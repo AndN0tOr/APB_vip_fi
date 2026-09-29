@@ -66,10 +66,8 @@ module fpt_apb_tb_top;
     // end
     genvar i;
     generate
-        for (i = 0; i < 4; i++) begin : gen_m_vif
-            // Gửi master_if_arr[i] tới đích danh master_agent_0, master_agent_1...
-            initial uvm_config_db#(fpt_apb_vif_t)::set(null, $sformatf("*master_agent_%0d*", i), "fpt_apb_vif", fpt_sys_if.fpt_master_if_arr[i]);
-        end
+        // Master VIF (1 master duy nhất)
+        initial uvm_config_db#(fpt_apb_vif_t)::set(null, "*master_agent*", "fpt_apb_vif", fpt_sys_if.fpt_master_if);
         for (i = 0; i < 8; i++) begin : gen_s_vif
             // Gửi slave_if_arr[i] tới đích danh slave_agent_0, slave_agent_1...
             initial uvm_config_db#(fpt_apb_vif_t)::set(null, $sformatf("*slave_agent_%0d*", i), "fpt_apb_vif", fpt_sys_if.fpt_slave_if_arr[i]);

@@ -12,8 +12,6 @@ class fpt_apb_master_agent extends uvm_agent;
     
     
     uvm_analysis_port #(fpt_apb_master_seq_item) item_collected_port;
-
-    int unsigned fpt_apb_master_i_priority;
     int unsigned fpt_pready_timeout;
 
     extern function new(string name = "fpt_apb_master_agent", uvm_component parent = null);
@@ -47,6 +45,7 @@ function void fpt_apb_master_agent::connect_phase(uvm_phase phase);
 	// if(m_cfg.is_active == UVM_ACTIVE) begin
 	m_apb_master_driver.seq_item_port.connect(m_apb_master_sequencer.seq_item_export);
     m_apb_master_monitor.item_collected_port.connect(item_collected_port);
+    m_apb_master_driver.fpt_pready_timeout = fpt_pready_timeout;
 	// end	
 	
 endfunction	

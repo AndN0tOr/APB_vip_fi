@@ -131,7 +131,7 @@ class fpt_apb_read_write_test extends fpt_apb_base_test;
         join_none
 
         master_seq.start(
-            apb_env_h.fpt_master_agents[0].m_apb_master_sequencer
+            apb_env_h.fpt_master_agent.m_apb_master_sequencer
         );
 
         wait fork;

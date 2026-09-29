@@ -8,7 +8,7 @@ class fpt_apb_env extends uvm_env;
 	//	Component Members
 	//--------------------------------------------------------------------	;
 	fpt_apb_sys_config fpt_sys_config;
-	fpt_apb_master_agent fpt_master_agents[];
+	fpt_apb_master_agent fpt_master_agent;
 	fpt_apb_slave_agent fpt_slave_agents[];
 	fpt_apb_sys_vif_t fpt_sys_vif;
 
@@ -28,16 +28,13 @@ function fpt_apb_env::new(string name = "fpt_apb_env", uvm_component parent = nu
 	super.new(name, parent);
 endfunction
 function void fpt_apb_env::fpt_apb_malloc_array();
-	fpt_master_agents = new[fpt_sys_config.fpt_master_numb];
 	fpt_slave_agents = new[fpt_sys_config.fpt_slave_numb];
 endfunction: fpt_apb_malloc_array
 
 function void fpt_apb_env::fpt_build_and_config_mem_models();
-	foreach (fpt_master_agents[i]) begin
-		fpt_master_agents[i] = fpt_apb_master_agent::type_id::create($sformatf("master_agent_%0d", i), this);
-		fpt_master_agents[i].fpt_apb_master_i_priority = fpt_sys_config.fpt_master_priority[i];
-		fpt_master_agents[i].fpt_pready_timeout = fpt_sys_config.fpt_pready_timeout[i];
-	end
+	fpt_master_agent = fpt_apb_master_agent::type_id::create("master_agent", this);
+	fpt_master_agent.fpt_pready_timeout = fpt_sys_config.fpt_pready_timeout;
+
     foreach (fpt_slave_agents[i]) begin
         // Instantiate instance from the apb env
 		fpt_slave_agents[i] = fpt_apb_slave_agent::type_id::create($sformatf("slave_agent_%0d", i), this);
@@ -68,10 +65,8 @@ function void fpt_apb_env::connect_phase(uvm_phase phase);
         `uvm_fatal("NO_SYS_VIF", "Could not find fpt_apb_sys_if_t in config_db")
     end
 
-    // Đổ cấu hình Master Priority xuống phần cứng
-    foreach (fpt_sys_config.fpt_master_priority[i]) begin
-        fpt_sys_vif.fpt_set_master_priority(i, fpt_sys_config.fpt_master_priority[i]);
-    end
+    // Đánh dấu Master 0 active xuống phần cứng (1 master duy nhất)
+    fpt_sys_vif.fpt_set_master_active(0);
 
     // Đổ cấu hình Slave Address Map xuống phần cứng
     foreach (fpt_sys_config.fpt_mem_model_base_addr[i]) begin
