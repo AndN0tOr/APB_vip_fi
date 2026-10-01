@@ -109,7 +109,7 @@ def main():
             "work.fpt_apb_tb_top",
             *plusargs,
             "-do",
-            "onerror {quit -f -code 1}; run -all; coverage save master_cov.ucdb; quit -f -code 0",
+            "onerror {quit -f -code 1}; run -all; coverage save coverage.ucdb; quit -f -code 0",
         ])
 
 
