@@ -97,7 +97,7 @@ class fpt_apb_rst_test extends fpt_apb_base_test;
         @(posedge vif.PRESETn);
 
         master_seq = fpt_apb_master_seq::type_id::create("master_seq");
-        slave_seq  = fpt_apb_slave_seq::type_id::create("slave_seq");
+        // slave_seq  = fpt_apb_slave_seq::type_id::create("slave_seq");
     
 
         master_seq.num_items = 5;

@@ -94,8 +94,9 @@ def main():
                 "view wave; "
                 "add wave sim:/fpt_apb_tb_top/PCLK; "
                 "add wave sim:/fpt_apb_tb_top/PRESETn; "
-                "add wave -r sim:/fpt_apb_tb_top/apb_if/*; "
+                "add wave -r sim:/fpt_apb_tb_top/fpt_sys_if/fpt_master_if/*; "
                 "run -all; "
+                "coverage save master_cov.ucdb; "
                 "wave zoom full"
             ),
         ])
@@ -108,7 +109,7 @@ def main():
             "work.fpt_apb_tb_top",
             *plusargs,
             "-do",
-            "onerror {quit -f -code 1}; run -all; quit -f -code 0",
+            "onerror {quit -f -code 1}; run -all; coverage save master_cov.ucdb; quit -f -code 0",
         ])
 
 
