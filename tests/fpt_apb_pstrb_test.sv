@@ -57,7 +57,6 @@ class fpt_apb_pstrb_master_seq extends fpt_apb_master_seq;
             .write_address(address),
             .write_data(write_data),
             .write_strobe(write_strobe),
-            .pstrb_rand(SET_STRB),
             .delay_rand(RAND_DELAY)
         );
 
