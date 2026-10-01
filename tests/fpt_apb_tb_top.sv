@@ -42,6 +42,18 @@ module fpt_apb_tb_top;
         forever #5 PCLK = ~PCLK;
     end
 
+    task automatic pulse_presetn(input int unsigned wait_cycle = 0, input int unsigned low_cycles = 2);
+        if (low_cycles == 0)
+            $fatal(1, "pulse_presetn requires at least one clock cycle");
+
+        repeat (wait_cycle)
+            @(negedge PCLK);
+        PRESETn <= 1'b0;
+
+        repeat (low_cycles) @(negedge PCLK);
+        PRESETn <= 1'b1;
+    endtask
+
     initial begin
         string selected_test;
         PRESETn = 1'b0;
@@ -52,11 +64,12 @@ module fpt_apb_tb_top;
         // Apply a second reset pulse only in the reset test.
         if ($value$plusargs("UVM_TESTNAME=%s", selected_test) &&
             selected_test == "fpt_apb_rst_test") begin
-            // repeat (4) @(posedge PCLK);
-            // PRESETn <= 1'b0;
-
-            // repeat (2) @(posedge PCLK);
-            // PRESETn <= 1'b1;
+            
+            pulse_presetn(1, 1);
+            pulse_presetn(3, 1);
+            pulse_presetn(4, 1);
+            pulse_presetn(7, 1);
+            pulse_presetn(10, 1);
         end
     end
     // initial begin 
