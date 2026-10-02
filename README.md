@@ -28,6 +28,12 @@ To open the QuestaSim GUI:
 python .\sim\questa.py --gui
 ```
 
+To check coverage:
+
+```powershell
+vcover report -cvg -details sim\build\questa\coverage.ucdb
+```
+
 The script compiles `tests/fpt_apb_tb_top.sv`. Generated files and the command-line simulation log are placed in `sim/build/questa`.
 
 ## VCS simulation

@@ -12,16 +12,25 @@ class fpt_apb_master_seq extends uvm_sequence#(fpt_apb_master_seq_item);
 	extern virtual task apb_master_write(
 		input  bit [`FPT_APB_ADDR_WIDTH-1:0]     	write_address,
 		input  bit [`FPT_APB_DATA_WIDTH-1:0]     	write_data,
-		input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe,
-		input  delay_rand_option_e  			 	delay_rand = SET_DELAY,
-		input  int unsigned  						delay = 0
+		input  int unsigned  						delay = 0,
+		input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe = 'hF,
+		input  delay_rand_option_e  			 	delay_rand = SET_DELAY
+	);
+
+	extern virtual task apb_master_write_pstrb_rand(
+		input  bit [`FPT_APB_ADDR_WIDTH-1:0]      write_address,
+		input  bit [`FPT_APB_DATA_WIDTH-1:0]      write_data,
+		output bit [(`FPT_APB_DATA_WIDTH/8)-1:0] write_strobe,
+		input  int unsigned                       delay = 0,
+		input  delay_rand_option_e                delay_rand = SET_DELAY
 	);
 
     extern virtual task apb_master_read(
 		input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
 		output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
-		input  	delay_rand_option_e 			delay_rand = SET_DELAY,
-		input 	int unsigned  					delay = 0
+		output  slave_error_e 					read_pslverr,
+		input 	int unsigned  					delay = 0,
+		input  	delay_rand_option_e 			delay_rand = SET_DELAY
 	);
 endclass
 	
@@ -64,10 +73,10 @@ endtask
 
 task fpt_apb_master_seq::apb_master_write(
     input  bit [`FPT_APB_ADDR_WIDTH-1:0]     	write_address,
-    input  bit [`FPT_APB_DATA_WIDTH-1:0]     	write_data,
-    input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe,
-	input  delay_rand_option_e  			 	delay_rand = SET_DELAY,
-	input  int unsigned  						delay = 0
+	input  bit [`FPT_APB_DATA_WIDTH-1:0]     	write_data,
+	input  int unsigned  						delay = 0,
+	input  bit [(`FPT_APB_DATA_WIDTH/8)-1:0] 	write_strobe = 'hF,
+	input  delay_rand_option_e  			 	delay_rand = SET_DELAY
 );
     fpt_apb_master_seq_item item;
 
@@ -75,22 +84,25 @@ task fpt_apb_master_seq::apb_master_write(
 
     start_item(item);
 
-	// The controlled helper assigns all transaction fields directly. Only
-	// delay may be enabled for randomization.
+	// Only the delay is optionally randomized; PSTRB is caller-specified.
 	item.rand_mode(0);
 	item.delay.rand_mode(delay_rand == RAND_DELAY);
 
     item.PADDR  = write_address;
     item.PWRITE = WRITE;
     item.PWDATA = write_data;
-    item.PSTRB  = write_strobe;
+	item.PSTRB  = write_strobe;
 
 	if (delay_rand == SET_DELAY) begin
     	item.delay = delay;
 	end
-	else begin
+
+	if (delay_rand == RAND_DELAY) begin
 		if (!item.randomize())
-			`uvm_fatal("RAND_FAIL", "Failed to randomize master delay")
+			`uvm_fatal(
+				"RAND_FAIL",
+				"Failed to randomize master write delay"
+			)
 	end
 
     finish_item(item);
@@ -107,8 +119,9 @@ endtask
 task fpt_apb_master_seq::apb_master_read(
     input   bit [`FPT_APB_ADDR_WIDTH-1:0]   read_address,
 	output  bit [`FPT_APB_DATA_WIDTH-1:0]   read_data,
-	input  	delay_rand_option_e 			delay_rand = SET_DELAY,
-	input 	int unsigned  					delay = 0
+	output  slave_error_e 					read_pslverr,
+	input 	int unsigned  					delay = 0,
+	input  	delay_rand_option_e 			delay_rand = SET_DELAY
 );
     fpt_apb_master_seq_item item;
 
@@ -142,6 +155,39 @@ task fpt_apb_master_seq::apb_master_read(
     //     )
 
     read_data = item.PRDATA;
+	read_pslverr = item.PSLVERR;
+endtask
+
+
+task fpt_apb_master_seq::apb_master_write_pstrb_rand(
+    input  bit [`FPT_APB_ADDR_WIDTH-1:0]      write_address,
+    input  bit [`FPT_APB_DATA_WIDTH-1:0]      write_data,
+    output bit [(`FPT_APB_DATA_WIDTH/8)-1:0] write_strobe,
+    input  int unsigned                       delay = 0,
+    input  delay_rand_option_e                delay_rand = SET_DELAY
+);
+    fpt_apb_master_seq_item item;
+
+    item = fpt_apb_master_seq_item::type_id::create("item");
+    start_item(item);
+
+	item.rand_mode(0);
+	item.delay.rand_mode(delay_rand == RAND_DELAY);
+	item.PSTRB.rand_mode(1);
+	item.trans_delay.constraint_mode(delay_rand == RAND_DELAY);
+
+    item.PADDR  = write_address;
+    item.PWRITE = WRITE;
+    item.PWDATA = write_data;
+
+	if (delay_rand == SET_DELAY)
+		item.delay = delay;
+
+	if (!item.randomize())
+		`uvm_fatal("RAND_FAIL", "Failed to randomize master write PSTRB")
+
+    finish_item(item);
+	write_strobe = item.PSTRB;
 endtask
 
 `endif

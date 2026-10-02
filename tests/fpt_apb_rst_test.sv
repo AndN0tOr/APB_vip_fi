@@ -1,6 +1,80 @@
 `ifndef FPT_APB_RST_TEST_SV
 `define FPT_APB_RST_TEST_SV
 
+localparam NUM_TEST = 5;
+
+class fpt_apb_rst_slave_seq extends fpt_apb_slave_seq;
+    `uvm_object_utils(fpt_apb_rst_slave_seq)
+
+    bit [`FPT_APB_ADDR_WIDTH-1:0] base_address = 'b0;
+    bit [`FPT_APB_DATA_WIDTH-1:0] mem_size = 'h00010000;
+    int unsigned word_count = mem_size / 4; // 4 byte / word
+
+    function new(string name = "fpt_apb_rst_slave_seq");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        // Write one 32-bit word at each address.
+        for (int i = 0; i < NUM_TEST; i ++) begin
+            apb_slave_resp(
+                .pready_delay(i)
+            );
+        end
+
+        repeat (NUM_TEST) begin
+            apb_slave_resp();
+        end
+    endtask
+endclass
+
+class fpt_apb_rst_master_seq extends fpt_apb_master_seq;
+    `uvm_object_utils(fpt_apb_rst_master_seq)
+
+    bit [`FPT_APB_ADDR_WIDTH-1:0] base_address = 'b0;
+    bit [`FPT_APB_DATA_WIDTH-1:0] mem_size = 'h00010000;
+    int unsigned word_count = mem_size / 4; // 4 byte / word
+
+    bit [`FPT_APB_ADDR_WIDTH-1:0] address;
+    bit [`FPT_APB_DATA_WIDTH-1:0] write_data;
+    bit [`FPT_APB_DATA_WIDTH-1:0] read_data;
+    slave_error_e read_pslverr;
+
+
+    function new(string name = "fpt_apb_rst_master_seq");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        for (int unsigned i = 0; i < NUM_TEST; i++) begin
+            address    = base_address + (i * 4);
+            write_data = (i << 16) + i;
+
+            apb_master_write(
+                .write_address(address), 
+                .write_data(write_data), 
+                .delay_rand(SET_DELAY),
+                .delay(i)
+            );
+        end
+
+        for (int unsigned i = 0; i < NUM_TEST ; i++) begin
+            address    = base_address + (i * 4);
+            write_data = (i << 16) + i;
+
+            apb_master_read(
+                .read_address(address), 
+                .read_data(read_data), 
+                .read_pslverr(read_pslverr),
+                .delay_rand(SET_DELAY),
+                .delay(i)
+            );
+        end
+
+       
+    endtask
+endclass
+
 class fpt_apb_rst_test extends fpt_apb_base_test;
     `uvm_component_utils(fpt_apb_rst_test)
 
@@ -23,6 +97,9 @@ class fpt_apb_rst_test extends fpt_apb_base_test;
         @(posedge vif.PRESETn);
 
         master_seq = fpt_apb_master_seq::type_id::create("master_seq");
+        // slave_seq  = fpt_apb_slave_seq::type_id::create("slave_seq");
+    
+
         master_seq.num_items = 5;
 
         // The master addresses every slave, so each one needs a responder.

@@ -76,14 +76,14 @@ interface fpt_apb_sys_if_t#(
     // Slaves Assertion Control & Bridge
     genvar g;
     generate
-        for (g = 0; g < FPT_MAX_SLAVES; g++) begin : gen_slv_assert_ctrl
-            initial begin
-                #1; // Đợi 1 timestep cho UVM connect_phase cập nhật cờ active
-                if (fpt_slv_is_active[g] == 1'b0) begin
-                    $assertoff(0, fpt_slave_if_arr[g]);
-                end
-            end
-        end
+        // for (g = 0; g < FPT_MAX_SLAVES; g++) begin : gen_slv_assert_ctrl
+        //     initial begin
+        //         #1; // Đợi 1 timestep cho UVM connect_phase cập nhật cờ active
+        //         if (fpt_slv_is_active[g] == 1'b0) begin
+        //             $assertoff(0, fpt_slave_if_arr[g]);
+        //         end
+        //     end
+        // end
 
         for (g = 0; g < FPT_MAX_SLAVES; g++) begin : gen_slv_bridge
             assign slv_in_prdata[g]  = fpt_slv_is_active[g] ? fpt_slave_if_arr[g].PRDATA  : 'hZ;

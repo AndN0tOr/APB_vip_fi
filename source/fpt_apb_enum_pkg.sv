@@ -54,6 +54,11 @@ package fpt_apb_enum_pkg;
         SET_ERR = 1'b0 
     } pslverr_rand_option_e;
 
+    typedef enum bit{
+        RAND_STRB = 1'b1,
+        SET_STRB = 1'b0 
+    } pstrb_rand_option_e;
+
 endpackage: fpt_apb_enum_pkg
 
 `endif

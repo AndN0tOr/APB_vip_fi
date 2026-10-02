@@ -9,6 +9,7 @@ class fpt_apb_slave_agent extends uvm_agent;
     fpt_apb_slave_driver m_apb_slave_driver;
     fpt_apb_slave_sequencer m_apb_slave_sequencer;
     fpt_apb_slave_monitor m_apb_slave_monitor;
+    fpt_apb_slave_coverage m_apb_slave_coverage;
     fpt_common_mem_model_t fpt_mem_model;
     fpt_apb_sys_config fpt_sys_config;
     uvm_analysis_port #(fpt_apb_slave_seq_item) item_collected_port;
@@ -35,6 +36,7 @@ function void fpt_apb_slave_agent::build_phase(uvm_phase phase);
     m_apb_slave_driver      = fpt_apb_slave_driver::type_id::create("m_apb_slave_driver", this);
     m_apb_slave_sequencer   = fpt_apb_slave_sequencer::type_id::create("m_apb_slave_sequencer", this);
     m_apb_slave_monitor     = fpt_apb_slave_monitor::type_id::create("m_apb_slave_monitor", this);
+    m_apb_slave_coverage    = fpt_apb_slave_coverage::type_id::create("m_apb_slave_coverage", this);
     if (!uvm_config_db#(fpt_apb_sys_config)::get(this, "", "fpt_sys_config", fpt_sys_config))
         `uvm_info(get_type_name(), "fpt_sys_config not found in config_db, continuing without it", UVM_HIGH)
 endfunction: build_phase	
@@ -46,6 +48,7 @@ function void fpt_apb_slave_agent::connect_phase(uvm_phase phase);
     m_apb_slave_driver.fpt_mem_model = this.fpt_mem_model;
 	m_apb_slave_driver.seq_item_port.connect(m_apb_slave_sequencer.seq_item_export);
 	m_apb_slave_monitor.item_collected_port.connect(item_collected_port);
+    m_apb_slave_monitor.item_collected_port.connect(m_apb_slave_coverage.analysis_export);
 	// end	
 	
 endfunction	
