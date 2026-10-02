@@ -22,12 +22,13 @@ class fpt_apb_base_test extends uvm_test;
     extern virtual function void build_phase(uvm_phase phase);
     extern virtual function void end_of_elaboration_phase(uvm_phase phase);
     extern virtual task run_phase(uvm_phase phase);
+    extern virtual function void final_phase(uvm_phase phase);
 
-    extern task start_master_slave_seq(
-        uvm_sequence_base master_seq,
-        uvm_sequence_base slave_seq
-    );
+    // Sequences of the test, declared in config_seqs().
+    fpt_apb_master_seq master_seq;    // The one sequence run on the master
+    fpt_apb_slave_seq  slave_seqs[];  // slave_seqs[i] answers on slave agent i
 
+    extern virtual function void config_seqs();
     extern virtual task seq_control();
 
 endclass : fpt_apb_base_test
@@ -63,11 +64,11 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
 
     // SPECIFIC INFO ABOUT MEMORY MODEL - CORRESPONDING TO THE SLAVE
     fpt_sys_config.fpt_mem_model_base_addr[0] = 'h0;
-    fpt_sys_config.fpt_mem_model_addr_range[0] = 'h0000FFFF;
+    fpt_sys_config.fpt_mem_model_addr_range[0] = 'h10000;
     fpt_sys_config.fpt_mem_model_init_pattern[0] = FPT_MEMORY_INIT_PATTERN_E'(INCR);
 
     fpt_sys_config.fpt_mem_model_base_addr[1] = 'h10000;
-    fpt_sys_config.fpt_mem_model_addr_range[1] = 'hFFFF;
+    fpt_sys_config.fpt_mem_model_addr_range[1] = 'h10000;
     fpt_sys_config.fpt_mem_model_init_pattern[1] = FPT_MEMORY_INIT_PATTERN_E'(ALL1);
 
     // default configuration values, doesn't affect the testbench
@@ -88,72 +89,85 @@ function void fpt_apb_base_test::end_of_elaboration_phase(uvm_phase phase);
     super.end_of_elaboration_phase(phase);
     uvm_top.print_topology();
 
-    // Send warnings/errors/fatals to a log file instead of the terminal.
+    // Copy warnings/errors/fatals to apb_error.log, and keep them on the
+    // terminal and in simulation.log so a failure is never file-only.
     err_log_fd = $fopen("apb_error.log", "w");
     uvm_top.set_report_default_file_hier(err_log_fd);
-    uvm_top.set_report_severity_action_hier(UVM_WARNING, UVM_LOG | UVM_COUNT);
-    uvm_top.set_report_severity_action_hier(UVM_ERROR,   UVM_LOG | UVM_COUNT);
-    uvm_top.set_report_severity_action_hier(UVM_FATAL,   UVM_LOG | UVM_EXIT);
-    uvm_test_done.set_drain_time(this,1000ns);
+    uvm_top.set_report_severity_action_hier(UVM_WARNING, UVM_DISPLAY | UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_ERROR,   UVM_DISPLAY | UVM_LOG | UVM_COUNT);
+    uvm_top.set_report_severity_action_hier(UVM_FATAL,   UVM_DISPLAY | UVM_LOG | UVM_EXIT);
 endfunction  : end_of_elaboration_phase
 
 //--------------------------------------------------------------------------------------------
+// Function: final_phase
+//  Closes the error log after the report summary has been written.
+//--------------------------------------------------------------------------------------------
+function void fpt_apb_base_test::final_phase(uvm_phase phase);
+    super.final_phase(phase);
+    if (err_log_fd != 0)
+        $fclose(err_log_fd);
+endfunction : final_phase
+
+//--------------------------------------------------------------------------------------------
 // Task: run_phase
-//  Used to give 100ns delay to complete the run_phase.
+//  Raises the objection around seq_control(). The drain time keeps the phase
+//  open after the last objection drops so in-flight transfers can finish.
 //
 // Parameters:
 //  phase - uvm phase
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::run_phase(uvm_phase phase);
+    // Per-phase objection replaces the deprecated uvm_test_done.
+    phase.get_objection().set_drain_time(this, 1000ns);
+
     phase.raise_objection(this);
+    config_seqs();
     seq_control();
     phase.drop_objection(this);
 endtask : run_phase
 
 //--------------------------------------------------------------------------------------------
-// Task: start_master_slave_seq
-//  Starts slave_seq on slave agent 0 as a background responder, then runs
-//  master_seq to completion. The master alone decides when traffic ends.
+// Function: config_seqs
+//  Declares every sequence of the test in one place. Default: one random
+//  master sequence and one random responder per slave agent.
+//  A test overrides this function, optionally calling super.config_seqs()
+//  first and then changing what it needs, for example:
+//    master_seq    = my_master_seq::type_id::create("master_seq");
+//    slave_seqs[0] = my_slave_seq::type_id::create("slave_seq_0");
+//  An entry of slave_seqs left null gets no responder.
 //--------------------------------------------------------------------------------------------
-task fpt_apb_base_test::start_master_slave_seq(
-    uvm_sequence_base master_seq,
-    uvm_sequence_base slave_seq
-);
-    fork
-        slave_seq.start(apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer);
-    join_none
+function void fpt_apb_base_test::config_seqs();
+    master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
 
-    master_seq.start(apb_env_h.fpt_master_agent.m_apb_master_sequencer);
-endtask : start_master_slave_seq
+    slave_seqs = new[apb_env_h.fpt_slave_agents.size()];
+    foreach (slave_seqs[i])
+        slave_seqs[i] = fpt_apb_slave_seq::type_id::create($sformatf("fpt_slave_seq_%0d", i));
+endfunction : config_seqs
 
 //--------------------------------------------------------------------------------------------
 // Task: seq_control
-//  Default traffic: random master sequence across both slaves. Derived tests
-//  override this task instead of run_phase.
+//  Starts the slave sequences in the background, then runs the master
+//  sequence. The master alone decides when the test ends.
 //--------------------------------------------------------------------------------------------
 task fpt_apb_base_test::seq_control();
-    fpt_apb_master_seq fpt_master_seq;
-    fpt_apb_slave_seq  fpt_slave_seq_0;
-    fpt_apb_slave_seq  fpt_slave_seq_1;
+    if (master_seq == null)
+        `uvm_fatal(get_type_name(), "master_seq is null, config_seqs() declared no master sequence")
 
-    fpt_master_seq  = fpt_apb_master_seq::type_id::create("fpt_master_seq");
-    fpt_slave_seq_0 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_0");
-    fpt_slave_seq_1 = fpt_apb_slave_seq::type_id::create("fpt_slave_seq_1");
+    if (slave_seqs.size() != apb_env_h.fpt_slave_agents.size())
+        `uvm_fatal(get_type_name(), $sformatf(
+            "slave_seqs has %0d entries but there are %0d slave agents",
+            slave_seqs.size(), apb_env_h.fpt_slave_agents.size()))
 
-    // Slaves are reactive background responders: only the master
-    // sequence decides when the test ends.
-    fork
-        fpt_slave_seq_0.start(
-            apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
-        );
-        fpt_slave_seq_1.start(
-            apb_env_h.fpt_slave_agents[1].m_apb_slave_sequencer
-        );
-    join_none
+    foreach (slave_seqs[i]) begin
+        automatic int idx = i;
+        if (slave_seqs[idx] == null)
+            continue;
+        fork
+            slave_seqs[idx].start(apb_env_h.fpt_slave_agents[idx].m_apb_slave_sequencer);
+        join_none
+    end
 
-    fpt_master_seq.start(
-        apb_env_h.fpt_master_agent.m_apb_master_sequencer
-    );
+    master_seq.start(apb_env_h.fpt_master_agent.m_apb_master_sequencer);
 endtask : seq_control
 
 `endif

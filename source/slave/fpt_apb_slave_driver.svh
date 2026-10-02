@@ -76,7 +76,7 @@ task fpt_apb_slave_driver::run_phase(uvm_phase phase);
             `uvm_info(
                 get_type_name(),
                 "Slave response completed",
-                UVM_LOW
+                UVM_HIGH
             )
         end
 
