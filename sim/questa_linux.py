@@ -45,10 +45,43 @@ def run(command):
     )
 
 
+def find_log_editor():
+    """Return the Antigravity CLI, or None when it is not installed."""
+    # Inside an Antigravity terminal its CLI is already on PATH.
+    for name in ("antigravity", "antigravity-ide"):
+        editor = shutil.which(name)
+        if editor:
+            return editor
+    # From any other WSL terminal, use the Windows install; it opens WSL paths.
+    for editor in sorted(Path("/mnt/c/Users").glob(
+            "*/AppData/Local/Programs/Antigravity IDE/bin/antigravity-ide")):
+        return str(editor)
+    return None
+
+
+def open_logs():
+    """Open the simulation log (and the error log when it is not empty) in Antigravity."""
+    logs = [BUILD / "simulation.log"]
+    error_log = BUILD / "apb_error.log"
+    if error_log.exists() and error_log.stat().st_size > 0:
+        logs.append(error_log)
+    logs = [str(log) for log in logs if log.exists()]
+    if not logs:
+        return
+
+    editor = find_log_editor()
+    if editor is None:
+        print("Antigravity not found. Logs:", *logs)
+        return
+    subprocess.run([editor, "--reuse-window", *logs])
+
+
 def main():
     arguments = sys.argv[1:]
 
     gui = "--gui" in arguments
+    # --no-open: do not open the logs after the run (useful for regressions).
+    open_log = "--no-open" not in arguments
     plusargs = [
         argument
         for argument in arguments
@@ -108,19 +141,24 @@ def main():
             ),
         ])
     else:
-        run([
-            VSIM,
-            "-coverage",
-            "-sv_lib", "/home/stupidrat/altera/questasim/uvm-1.2/linux_x86_64/uvm_dpi",
-            "-c",
-            "-l",
-            "simulation.log",
-            "work.fpt_apb_tb_top",
-            "+UVM_VERBOSITY=UVM_LOW",
-            *plusargs,
-            "-do",
-            "coverage save -onexit coverage.ucdb; onerror {quit -f -code 1}; run -all; quit -f -code 0",
-        ])
+        try:
+            run([
+                VSIM,
+                "-coverage",
+                "-sv_lib", "/home/stupidrat/altera/questasim/uvm-1.2/linux_x86_64/uvm_dpi",
+                "-c",
+                "-l",
+                "simulation.log",
+                "work.fpt_apb_tb_top",
+                "+UVM_VERBOSITY=UVM_LOW",
+                *plusargs,
+                "-do",
+                "coverage save -onexit coverage.ucdb; onerror {quit -f -code 1}; run -all; quit -f -code 0",
+            ])
+        finally:
+            # Open the logs even when vsim fails, since that is when they matter.
+            if open_log:
+                open_logs()
 
 
 if __name__ == "__main__":
