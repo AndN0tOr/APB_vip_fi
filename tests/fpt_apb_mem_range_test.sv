@@ -125,6 +125,12 @@ class fpt_apb_mem_range_test extends fpt_apb_base_test;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        // This test drives a single slave, so 0x10000 and above must be unmapped.
+        // The base config has two slaves; keep only slave 0 (arrays must match fpt_slave_numb).
+        fpt_sys_config.fpt_slave_numb = 1;
+        fpt_sys_config.fpt_mem_model_base_addr    = new[1](fpt_sys_config.fpt_mem_model_base_addr);
+        fpt_sys_config.fpt_mem_model_addr_range   = new[1](fpt_sys_config.fpt_mem_model_addr_range);
+        fpt_sys_config.fpt_mem_model_init_pattern = new[1](fpt_sys_config.fpt_mem_model_init_pattern);
         // Match the 0x10000-byte sweep to the configured slave region.
         fpt_sys_config.fpt_mem_model_addr_range[0] = 32'h0001_0000;
     endfunction
@@ -136,7 +142,16 @@ class fpt_apb_mem_range_test extends fpt_apb_base_test;
         master_seq = fpt_apb_mem_range_master_seq::type_id::create("master_seq");
         slave_seq  = fpt_apb_mem_range_slave_seq::type_id::create("slave_seq");
 
-        start_master_slave_seq(master_seq, slave_seq);
+        // Slave 0 answers in the background; the master decides when the test ends.
+        fork
+            slave_seq.start(
+                apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
+            );
+        join_none
+
+        master_seq.start(
+            apb_env_h.fpt_master_agent.m_apb_master_sequencer
+        );
     endtask
 endclass
 

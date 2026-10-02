@@ -118,7 +118,16 @@ class fpt_apb_pstrb_test extends fpt_apb_base_test;
         master_seq = fpt_apb_pstrb_master_seq::type_id::create("master_seq");
         slave_seq  = fpt_apb_pstrb_slave_seq::type_id::create("slave_seq");
 
-        start_master_slave_seq(master_seq, slave_seq);
+        // Slave 0 answers in the background; the master decides when the test ends.
+        fork
+            slave_seq.start(
+                apb_env_h.fpt_slave_agents[0].m_apb_slave_sequencer
+            );
+        join_none
+
+        master_seq.start(
+            apb_env_h.fpt_master_agent.m_apb_master_sequencer
+        );
     endtask
 endclass
 
