@@ -10,7 +10,6 @@ package fpt_apb_typedef_pkg;
     ) fpt_apb_vif_t;
 
     typedef virtual fpt_apb_sys_if_t #(
-        .FPT_MAX_MASTERS (`FPT_APB_MAX_MASTER),
         .FPT_MAX_SLAVES (`FPT_APB_MAX_SLAVE),
         .FPT_DATA_WIDTH (`FPT_APB_DATA_WIDTH),
         .FPT_ADDR_WIDTH (`FPT_APB_ADDR_WIDTH)

@@ -54,6 +54,7 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
 	if (!uvm_config_db#(fpt_apb_sys_config)::get(this, "", "fpt_apb_sys_config", fpt_sys_config)) begin
         `uvm_fatal(get_full_name(), "Cannot get fpt_apb_sys_config from config_db!")
     end
+    fpt_sys_config.validate();
 	fpt_apb_malloc_array();
 	fpt_build_and_config_mem_models();
 endfunction: build_phase
@@ -64,9 +65,6 @@ function void fpt_apb_env::connect_phase(uvm_phase phase);
     if (!uvm_config_db#(fpt_apb_sys_vif_t)::get(this, "", "fpt_apb_sys_vif", fpt_sys_vif)) begin
         `uvm_fatal("NO_SYS_VIF", "Could not find fpt_apb_sys_if_t in config_db")
     end
-
-    // Đánh dấu Master 0 active xuống phần cứng (1 master duy nhất)
-    fpt_sys_vif.fpt_set_master_active(0);
 
     // Đổ cấu hình Slave Address Map xuống phần cứng
     foreach (fpt_sys_config.fpt_mem_model_base_addr[i]) begin

@@ -2,7 +2,6 @@
 `define FPT_APB_SYS_IF_SV
 
 interface fpt_apb_sys_if_t#(
-    parameter int FPT_MAX_MASTERS = 4,
     parameter int FPT_MAX_SLAVES  = 8,
     parameter int FPT_DATA_WIDTH  = 32,
     parameter int FPT_ADDR_WIDTH  = 32
@@ -26,7 +25,6 @@ interface fpt_apb_sys_if_t#(
     logic [31:0] fpt_slv_base_addr  [FPT_MAX_SLAVES];
     logic [31:0] fpt_slv_addr_range [FPT_MAX_SLAVES];
     bit          fpt_slv_is_active  [FPT_MAX_SLAVES];
-    bit          fpt_mst_is_active;
 
     function void fpt_set_memory_map(int slv_idx, logic [31:0] base, logic [31:0] range);
         fpt_slv_base_addr[slv_idx]  = base;
@@ -34,14 +32,10 @@ interface fpt_apb_sys_if_t#(
         fpt_slv_is_active[slv_idx]  = 1'b1;
     endfunction
 
-    function void fpt_set_master_active(int mst_idx = 0);
-        fpt_mst_is_active = 1'b1;
-    endfunction
-
     // ========================================================================
     // BRIDGE SIGNALS
     // ========================================================================
-    // Master Inputs -> Router (1 Master duy nhất)
+    // Master Inputs -> Router
     logic [FPT_ADDR_WIDTH-1:0]     mst_in_paddr;
     logic                          mst_in_pwrite;
     logic [FPT_DATA_WIDTH-1:0]     mst_in_pwdata;
@@ -67,21 +61,13 @@ interface fpt_apb_sys_if_t#(
     logic                          slv_out_penable [FPT_MAX_SLAVES];
     logic [(FPT_DATA_WIDTH/8)-1:0] slv_out_pstrb   [FPT_MAX_SLAVES];
 
-    // Master Assertion Control (1 Master duy nhất)
-    initial begin
-        #1; // Đợi 1 timestep cho UVM connect_phase cập nhật cờ active
-        if (fpt_mst_is_active == 1'b0) begin
-            $assertoff(0, fpt_master_if);
-        end
-    end
-
-    // Master Bridge (1 Master duy nhất)
-    assign mst_in_paddr   = fpt_mst_is_active ? fpt_master_if.PADDR   : 'hZ;
-    assign mst_in_pwrite  = fpt_mst_is_active ? fpt_master_if.PWRITE  : 1'hZ;
-    assign mst_in_pwdata  = fpt_mst_is_active ? fpt_master_if.PWDATA  : 'hZ;
-    assign mst_in_psel    = fpt_mst_is_active ? fpt_master_if.PSEL    : 1'bZ;
-    assign mst_in_penable = fpt_mst_is_active ? fpt_master_if.PENABLE : 1'bZ;
-    assign mst_in_pstrb   = fpt_mst_is_active ? fpt_master_if.PSTRB   : 'hZ;
+    // Master Bridge
+    assign mst_in_paddr   = fpt_master_if.PADDR;
+    assign mst_in_pwrite  = fpt_master_if.PWRITE;
+    assign mst_in_pwdata  = fpt_master_if.PWDATA;
+    assign mst_in_psel    = fpt_master_if.PSEL;
+    assign mst_in_penable = fpt_master_if.PENABLE;
+    assign mst_in_pstrb   = fpt_master_if.PSTRB;
 
     assign fpt_master_if.PRDATA  = mst_out_prdata;
     assign fpt_master_if.PREADY  = mst_out_pready;
@@ -114,7 +100,7 @@ interface fpt_apb_sys_if_t#(
     endgenerate
 
     // ========================================================================
-    // ROUTING LOGIC (1 Master -> Multi Slave)
+    // ROUTING LOGIC (1 Master -> N Slaves)
     // ========================================================================
     int fpt_target_slave;
     bit fpt_valid_slave_found;
@@ -126,9 +112,9 @@ interface fpt_apb_sys_if_t#(
         fpt_master_req        = 1'b0;
         
         // -------------------------------------------------------------
-        // BƯỚC A: REQUEST DETECTION (1 Master duy nhất)
+        // BƯỚC A: REQUEST DETECTION
         // -------------------------------------------------------------
-        if (fpt_mst_is_active && mst_in_psel === 1'b1) begin
+        if (mst_in_psel === 1'b1) begin
             fpt_master_req = 1'b1;
         end
 
@@ -139,7 +125,8 @@ interface fpt_apb_sys_if_t#(
             for (int i = 0; i < FPT_MAX_SLAVES; i++) begin
                 if (fpt_slv_is_active[i] && 
                     (mst_in_paddr >= fpt_slv_base_addr[i]) && 
-                    (mst_in_paddr < (fpt_slv_base_addr[i] + fpt_slv_addr_range[i]))) begin
+                    // Offset form: base + range may not fit in 32 bits.
+                    ((mst_in_paddr - fpt_slv_base_addr[i]) < fpt_slv_addr_range[i])) begin
                     fpt_target_slave      = i;
                     fpt_valid_slave_found = 1'b1;
                     break;

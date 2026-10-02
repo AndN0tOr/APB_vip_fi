@@ -1,10 +1,6 @@
 `ifndef FPT_APB_DEF_SVH
 `define FPT_APB_DEF_SVH
 
-`ifndef FPT_APB_MAX_MASTER
-`define FPT_APB_MAX_MASTER 4
-`endif 
-
 `ifndef FPT_APB_MAX_SLAVE
 `define FPT_APB_MAX_SLAVE 8
 `endif
