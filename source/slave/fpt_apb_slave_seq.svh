@@ -4,6 +4,7 @@
 class fpt_apb_slave_seq extends uvm_sequence#(fpt_apb_slave_seq_item);
 
 	`uvm_object_utils(fpt_apb_slave_seq)
+	// Kept so existing tests still compile; body() runs forever and ignores them.
 	int unsigned num_items = 100;
 	bit use_index_delay = 1'b0;
 	
@@ -40,12 +41,11 @@ task fpt_apb_slave_seq::body();
         `uvm_fatal(get_type_name(), "Cannot open transaction log")
 	end
 	
-	for (int i = 0; i < num_items; i++) begin
+	// A slave is a reactive responder: answer every transfer until the test ends.
+	forever begin
 		m_apb_slave_seq_item = fpt_apb_slave_seq_item::type_id::create("m_apb_slave_seq_item");
 		start_item(m_apb_slave_seq_item);
 		assert (m_apb_slave_seq_item.randomize());
-		if (use_index_delay)
-			m_apb_slave_seq_item.delay = i;
 
 		if (enable_log)
 		$fdisplay(log_file, "%s",
