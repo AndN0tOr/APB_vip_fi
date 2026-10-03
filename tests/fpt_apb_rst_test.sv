@@ -82,6 +82,13 @@ class fpt_apb_rst_test extends fpt_apb_base_test;
         super.new(name, parent);
     endfunction
 
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        // Every transfer of this test is cut by one of the reset pulses (C9), so the
+        // system monitor sees no completed transfer. Remove once the test completes some.
+        fpt_sys_config.fpt_sys_monitor_min_transfer_count = 0;
+    endfunction
+
     virtual task run_phase(uvm_phase phase);
         fpt_apb_master_seq master_seq;
         fpt_apb_slave_seq slave_seqs[];

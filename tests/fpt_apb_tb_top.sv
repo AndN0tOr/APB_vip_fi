@@ -16,6 +16,7 @@ import fpt_apb_enum_pkg::*;
 import fpt_apb_slave_pkg::*;
 import fpt_apb_master_pkg::*;
 
+`include "../source/fpt_apb_sys_monitor.svh"
 `include "../source/fpt_apb_env.svh"
 `include "fpt_apb_base_test.svh"
 `include "fpt_apb_rst_test.sv"

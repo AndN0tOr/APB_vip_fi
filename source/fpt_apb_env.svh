@@ -10,6 +10,7 @@ class fpt_apb_env extends uvm_env;
 	fpt_apb_sys_config fpt_sys_config;
 	fpt_apb_master_agent fpt_master_agent;
 	fpt_apb_slave_agent fpt_slave_agents[];
+	fpt_apb_sys_monitor fpt_sys_monitor;
 	fpt_apb_sys_vif_t fpt_sys_vif;
 
 	//--------------------------------------------------------------------
@@ -57,6 +58,9 @@ function void fpt_apb_env::build_phase(uvm_phase phase);
     fpt_sys_config.validate();
 	fpt_apb_malloc_array();
 	fpt_build_and_config_mem_models();
+
+	if (fpt_sys_config.fpt_sys_monitor_enable)
+		fpt_sys_monitor = fpt_apb_sys_monitor::type_id::create("sys_monitor", this);
 endfunction: build_phase
 
 function void fpt_apb_env::connect_phase(uvm_phase phase);
@@ -65,6 +69,17 @@ function void fpt_apb_env::connect_phase(uvm_phase phase);
     if (!uvm_config_db#(fpt_apb_sys_vif_t)::get(this, "", "fpt_apb_sys_vif", fpt_sys_vif)) begin
         `uvm_fatal("NO_SYS_VIF", "Could not find fpt_apb_sys_if_t in config_db")
     end
+
+	// System monitor: master stream, one FIFO per slave, and the slave memories to compare.
+	if (fpt_sys_monitor != null) begin
+		fpt_master_agent.item_collected_port.connect(fpt_sys_monitor.fpt_master_export);
+		foreach (fpt_slave_agents[fpt_slave_index]) begin
+			fpt_slave_agents[fpt_slave_index].item_collected_port.connect(
+				fpt_sys_monitor.fpt_slave_fifo[fpt_slave_index].analysis_export);
+			fpt_sys_monitor.fpt_actual_mem[fpt_slave_index] =
+				fpt_slave_agents[fpt_slave_index].fpt_mem_model;
+		end
+	end
 
     // Đổ cấu hình Slave Address Map xuống phần cứng
     foreach (fpt_sys_config.fpt_mem_model_base_addr[i]) begin

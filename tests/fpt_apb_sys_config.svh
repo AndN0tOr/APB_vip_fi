@@ -14,6 +14,13 @@ class fpt_apb_sys_config extends uvm_object;
     FPT_MEMORY_INIT_PATTERN_E fpt_mem_model_init_pattern[];
 
     int unsigned fpt_pready_timeout = 1000;
+
+    // System monitor (scoreboard) knobs
+    bit          fpt_sys_monitor_enable             = 1'b1;
+    bit          fpt_sys_monitor_check_routing      = 1'b1;
+    bit          fpt_sys_monitor_check_final_memory = 1'b1;
+    int unsigned fpt_sys_monitor_min_transfer_count = 1;   // fewer observed transfers is a FAIL
+
     extern function new(string name = "fpt_apb_sys_config");
     extern function void validate();
 
