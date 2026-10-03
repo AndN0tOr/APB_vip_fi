@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import sys
 
+from coverage_script import write_holes_log
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 BUILD = SCRIPT_DIR / "build" / "questa"
@@ -65,6 +67,7 @@ def open_logs():
     error_log = BUILD / "apb_error.log"
     if error_log.exists() and error_log.stat().st_size > 0:
         logs.append(error_log)
+    logs.append(BUILD / "coverage_holes.log")
     logs = [str(log) for log in logs if log.exists()]
     if not logs:
         return
@@ -156,6 +159,10 @@ def main():
                 "coverage save -onexit coverage.ucdb; onerror {quit -f -code 1}; run -all; quit -f -code 0",
             ])
         finally:
+            try:
+                write_holes_log(BUILD / "coverage.ucdb", BUILD / "coverage_holes.log")
+            except (OSError, subprocess.CalledProcessError) as error:
+                print("Cannot write coverage_holes.log:", error)
             # Open the logs even when vsim fails, since that is when they matter.
             if open_log:
                 open_logs()

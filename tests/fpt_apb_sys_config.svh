@@ -15,6 +15,12 @@ class fpt_apb_sys_config extends uvm_object;
 
     int unsigned fpt_pready_timeout = 1000;
 
+    // Default master traffic: PADDR is randomized in [addr_min, addr_max]
+    // (inclusive) and the master sends num_trans transfers.
+    bit [`FPT_APB_ADDR_WIDTH-1:0] fpt_master_addr_min  = 'h0;
+    bit [`FPT_APB_ADDR_WIDTH-1:0] fpt_master_addr_max  = 'h1FFFF;
+    int unsigned                  fpt_master_num_trans = 100;
+
     // System monitor (scoreboard) knobs
     bit          fpt_sys_monitor_enable             = 1'b1;
     bit          fpt_sys_monitor_check_routing      = 1'b1;
@@ -88,6 +94,11 @@ function void fpt_apb_sys_config::validate();
             end
         end
     end
+
+    if (fpt_master_addr_min > fpt_master_addr_max)
+        errors.push_back($sformatf(
+            "fpt_master_addr_min 0x%0h > fpt_master_addr_max 0x%0h",
+            fpt_master_addr_min, fpt_master_addr_max));
 
     if (errors.size() != 0) begin
         msg = "Invalid fpt_apb_sys_config:";

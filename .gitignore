@@ -17,3 +17,4 @@ vc_hdrs.h
 # AI document
 doc/reviews/*.md
 doc/checkpoint/*.md
+doc/coverpoint_list/*.md

@@ -5,6 +5,9 @@ class fpt_apb_master_seq extends uvm_sequence#(fpt_apb_master_seq_item);
 
 	`uvm_object_utils(fpt_apb_master_seq)
 	int unsigned num_items = 100;
+	// PADDR is randomized in [addr_min, addr_max] (inclusive).
+	bit [`FPT_APB_ADDR_WIDTH-1:0] addr_min = 'h0;
+	bit [`FPT_APB_ADDR_WIDTH-1:0] addr_max = 'h1FFFF;
 	
 	extern function new (string name = "fpt_apb_master_seq");
 	extern task body();	
@@ -57,8 +60,8 @@ task fpt_apb_master_seq::body();
 		m_apb_master_seq_item = fpt_apb_master_seq_item::type_id::create("m_apb_master_seq_item");
 		start_item(m_apb_master_seq_item);
 		assert (m_apb_master_seq_item.randomize() with {
-			PADDR >= 'h0000;
-			PADDR <= 'h1FFFF;
+			PADDR >= local::addr_min;
+			PADDR <= local::addr_max;
 			});
 		if (enable_log)
 		$fdisplay(log_file, "%s",

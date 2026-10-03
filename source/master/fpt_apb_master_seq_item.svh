@@ -19,6 +19,10 @@ class fpt_apb_master_seq_item extends uvm_sequence_item;
 
     constraint pstrb_read_pstrb_c {(PWRITE == READ) -> (PSTRB == '0);}
 
+    // Without this the solver picks uniformly over (PWRITE, PSTRB) pairs:
+    // 16 write pairs vs 1 read pair, so only ~6% of transfers were reads.
+    constraint pwrite_before_pstrb_c {solve PWRITE before PSTRB;}
+
     extern function new(string name = "fpt_apb_master_seq_item");
     extern virtual function void do_copy(uvm_object rhs);
     extern virtual function bit do_compare(

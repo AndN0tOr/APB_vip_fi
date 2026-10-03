@@ -71,6 +71,11 @@ function void fpt_apb_base_test::build_phase(uvm_phase phase);
     fpt_sys_config.fpt_mem_model_addr_range[1] = 'h10000;
     fpt_sys_config.fpt_mem_model_init_pattern[1] = FPT_MEMORY_INIT_PATTERN_E'(ALL1);
 
+    // DEFAULT MASTER TRAFFIC (used by config_seqs)
+    fpt_sys_config.fpt_master_addr_min  = 'h0;
+    fpt_sys_config.fpt_master_addr_max  = 'h1FFFF;
+    fpt_sys_config.fpt_master_num_trans = 500;
+
     // default configuration values, doesn't affect the testbench
     fpt_sys_config.fpt_clk_period = 10;
 
@@ -138,6 +143,9 @@ endtask : run_phase
 //--------------------------------------------------------------------------------------------
 function void fpt_apb_base_test::config_seqs();
     master_seq = fpt_apb_master_seq::type_id::create("fpt_master_seq");
+    master_seq.num_items = fpt_sys_config.fpt_master_num_trans;
+    master_seq.addr_min  = fpt_sys_config.fpt_master_addr_min;
+    master_seq.addr_max  = fpt_sys_config.fpt_master_addr_max;
 
     slave_seqs = new[apb_env_h.fpt_slave_agents.size()];
     foreach (slave_seqs[i])
